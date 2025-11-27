@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>هبیت ترکر | نسخه نهایی</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HabitTracker">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4305/4305432.png">
+    
+    <!-- Embedded Manifest for Single File PWA -->
+    <link rel="manifest" id="my-manifest-placeholder">
+
+    <!-- Vazirmatn Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --primary: #4f46e5; /* Indigo 600 */
+            --primary-light: #818cf8;
+            --primary-bg: #e0e7ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            
+            /* Theme Colors */
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --radius-l: 24px;
+            --radius-m: 16px;
+            --radius-s: 12px;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --primary-bg: #312e81;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+            padding-bottom: 100px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* --- HEADER --- */
+        .header { margin-bottom: 20px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h1 { font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+        
+        .header-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            color: var(--text-muted); width: 38px; height: 38px;
+            border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
+        }
+        .icon-btn:hover { border-color: var(--text-muted); color: var(--text-main); }
+        .icon-btn svg { width: 20px; height: 20px; stroke-width: 2; }
+
+        /* Level Progress */
+        .level-container {
+            background: var(--bg-surface); padding: 12px 16px;
+            border-radius: var(--radius-m); border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 20px;
+        }
+        .level-badge {
+            background: var(--primary); color: white;
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+        .level-info { flex: 1; }
+        .level-text { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px; font-weight: 600; color: var(--text-muted); }
+        .xp-bar { height: 6px; background: var(--bg-body); border-radius: 10px; overflow: hidden; }
+        .xp-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.6s ease; border-radius: 10px; }
+
+        /* --- CALENDAR (FIXED) --- */
+        .calendar-widget {
+            background: var(--bg-surface);
+            border-radius: var(--radius-l);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .calendar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 16px 8px 16px;
+            background: var(--bg-surface);
+        }
+        .cal-title { font-weight: 800; font-size: 1rem; color: var(--text-main); }
+        .cal-nav-btn {
+            background: transparent; border: none; width: 32px; height: 32px;
+            border-radius: 8px; color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; 
+        }
+        .cal-nav-btn svg { width: 20px; height: 20px; }
+
+        .calendar-grid-wrapper {
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 400px; overflow: hidden;
+            padding: 0 8px 8px 8px;
+        }
+        .calendar-grid-wrapper.collapsed { max-height: 100px; }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            row-gap: 4px; column-gap: 2px;
+        }
+
+        .day-header {
+            text-align: center; font-size: 0.7rem; color: var(--text-muted);
+            padding: 8px 0; font-weight: 500; opacity: 0.7;
+        }
+
+        .cal-day {
+            aspect-ratio: 1/0.9;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 10px; cursor: pointer; position: relative;
+            transition: all 0.2s; font-size: 0.95rem; font-weight: 600;
+            color: var(--text-main); border: 2px solid transparent;
+        }
+        
+        .cal-day.today { 
+            color: var(--primary); 
+            border-color: var(--primary-light);
+        }
+        
+        .cal-day.selected { 
+            background: var(--primary); color: white !important; 
+            border-color: var(--primary); 
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+        
+        .cal-day.empty { pointer-events: none; }
+        
+        .cal-dot {
+            width: 4px; height: 4px; background: var(--success);
+            border-radius: 50%; position: absolute; bottom: 4px;
+        }
+        .cal-day.selected .cal-dot { background: white; opacity: 0.9; }
+
+        .calendar-toggle {
+            display: flex; justify-content: center; padding: 6px; cursor: pointer;
+            color: var(--text-muted); background: transparent; border-top: 1px solid var(--border);
+        }
+        .calendar-toggle svg { width: 18px; height: 18px; transition: transform 0.3s; }
+        .calendar-toggle.collapsed svg { transform: rotate(0deg); }
+        .calendar-toggle svg { transform: rotate(180deg); }
+
+
+        /* --- FILTERS --- */
+        .categories-filter {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .categories-filter::-webkit-scrollbar { display: none; }
+        
+        .cat-btn {
+            padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-surface); color: var(--text-muted);
+            font-size: 0.8rem; white-space: nowrap; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px; font-weight: 600;
+        }
+        .cat-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        
+        /* FIXED: Primary color background for better contrast in dark mode */
+        .cat-btn.active { 
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+        .cat-btn.active .cat-dot { background: white; }
+
+        /* --- HABIT CARDS --- */
+        .list-header {
+            margin-bottom: 12px; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .habits-list { display: flex; flex-direction: column; gap: 12px; }
+        
+        .habit-card {
+            background: var(--bg-surface); border-radius: var(--radius-m);
+            padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; gap: 12px;
+            transition: transform 0.2s; position: relative; overflow: hidden;
+        }
+        .habit-card:active { transform: scale(0.99); }
+        .habit-card::before {
+            content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+            width: 4px; background: var(--card-color);
+        }
+        
+        .habit-header { display: flex; align-items: center; gap: 14px; }
+        
+        .habit-icon-box {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-body); flex-shrink: 0; color: var(--text-main);
+        }
+        .habit-icon-box svg { width: 24px; height: 24px; stroke-width: 1.5; }
+        
+        .habit-info { flex: 1; min-width: 0; }
+        .habit-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: var(--text-main); }
+        .habit-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
+        .habit-badge { 
+            background: var(--bg-body); padding: 2px 6px; border-radius: 6px; 
+            font-weight: 500; color: var(--text-muted);
+        }
+
+        .habit-actions {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 12px; border-top: 1px solid var(--border);
+        }
+        
+        .action-group { display: flex; gap: 8px; }
+        .mini-btn {
+            width: 34px; height: 34px; border-radius: 10px; border: none;
+            background: transparent; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .mini-btn:hover { background: var(--bg-body); color: var(--text-main); }
+        .mini-btn svg { width: 18px; height: 18px; }
+        
+        .check-btn {
+            width: 42px; height: 42px; border-radius: 12px;
+            border: 2px solid var(--border); background: transparent;
+            color: var(--border); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .check-btn.checked { background: var(--success); border-color: var(--success); color: white; }
+        .check-btn svg { width: 22px; height: 22px; stroke-width: 3; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .check-btn.checked svg { opacity: 1; transform: scale(1); }
+        
+        .play-btn { border-color: var(--primary); color: var(--primary); }
+        .play-btn svg { opacity: 1; transform: scale(1); fill: currentColor; width: 16px; height: 16px; stroke: none; }
+
+        /* --- MODALS --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-overlay); z-index: 2000;
+            align-items: flex-end; opacity: 0; transition: opacity 0.3s;
+        }
+        .modal.active { display: flex; opacity: 1; }
+        .modal-content {
+            background: var(--bg-surface); width: 100%; max-width: 500px;
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 24px; max-height: 85vh; overflow-y: auto;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            margin: 0 auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+        @media (min-width: 600px) {
+            .modal { align-items: center; }
+            .modal-content { border-radius: 24px; transform: scale(0.95); }
+        }
+        .modal.active .modal-content { transform: translateY(0); }
+        @media (min-width: 600px) { .modal.active .modal-content { transform: scale(1); } }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+        .form-input, .form-select, textarea.form-input {
+            width: 100%; padding: 14px; border: 2px solid var(--border);
+            border-radius: 14px; background: var(--bg-surface); color: var(--text-main);
+            font-size: 1rem; font-family: inherit; transition: border 0.2s;
+        }
+        .form-input:focus { border-color: var(--primary); outline: none; }
+
+        /* Category Manager */
+        .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .cat-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 14px; background: var(--bg-body); border-radius: 12px;
+        }
+        .cat-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
+        .cat-color-circle { width: 14px; height: 14px; border-radius: 50%; }
+        .btn-delete-cat { 
+            color: var(--danger); background: rgba(239, 68, 68, 0.1); border: none; 
+            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .btn-delete-cat svg { width: 16px; height: 16px; stroke-width: 2; }
+        .add-cat-form { display: flex; gap: 10px; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .color-picker-wrapper { position: relative; width: 44px; height: 44px; overflow: hidden; border-radius: 12px; border: 2px solid var(--border); flex-shrink: 0; }
+        .color-picker-input { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; padding: 0; margin: 0; }
+
+        /* FAB */
+        .fab {
+            position: fixed; bottom: 30px; left: 24px;
+            width: 56px; height: 56px; border-radius: 18px;
+            /* FIXED: Primary color for visibility in Dark Mode */
+            background: var(--primary); color: white; border: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            z-index: 100; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .fab svg { width: 28px; height: 28px; stroke-width: 2.5; }
+        .fab:active { transform: scale(0.9); }
+
+        /* Timer Overlay */
+        .timer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 3000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transform: translateY(100%); transition: transform 0.4s;
+        }
+        .timer-overlay.active { transform: translateY(0); }
+        .timer-circle {
+            width: 240px; height: 240px; border-radius: 50%;
+            border: 6px solid var(--bg-card); display: flex; align-items: center; justify-content: center;
+            margin-bottom: 40px; position: relative; box-shadow: var(--shadow-md);
+        }
+        .timer-time { font-size: 4rem; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--text-main); }
+        .timer-btns { display: flex; gap: 24px; }
+        .big-btn {
+            width: 64px; height: 64px; border-radius: 20px; border: none;
+            font-size: 2rem; color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .big-btn:active { transform: scale(0.95); }
+        .big-btn svg { width: 28px; height: 28px; fill: currentColor; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--bg-surface); padding: 10px 20px; border-radius: 20px;
+            box-shadow: var(--shadow-md); border: 1px solid var(--border);
+            z-index: 4000; opacity: 0; transition: all 0.4s; font-weight: 600; white-space: nowrap;
+            display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Selectors */
+        .days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .day-checkbox { display: none; }
+        .day-label {
+            background: var(--bg-body); padding: 12px; border-radius: 12px;
+            text-align: center; font-size: 0.9rem; cursor: pointer; border: 2px solid transparent;
+            color: var(--text-muted);
+        }
+        .day-checkbox:checked + .day-label {
+            background: var(--primary-bg); border-color: var(--primary); color: var(--primary); font-weight: 700;
+        }
+        
+        .icon-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+        .icon-opt {
+            width: 50px; height: 50px; flex-shrink: 0; background: var(--bg-body); color: var(--text-muted);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            border: 2px solid transparent; cursor: pointer; transition: all 0.2s;
+        }
+        .icon-opt svg { width: 24px; height: 24px; stroke-width: 1.5; }
+        .icon-opt.selected { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+        
+        .color-grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;}
+        .color-opt { width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform 0.2s; }
+        .color-opt:hover { transform: scale(1.1); }
+        .color-opt.selected { transform: scale(1.15); box-shadow: 0 0 0 2px var(--text-main); }
+        
+        /* Analytics */
+        .chart-container { margin-bottom: 24px; text-align: center; }
+        .heatmap-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; margin-top: 10px; justify-content: center; }
+        .heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: var(--bg-body); }
+        .badges-grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-top">
+                <h1>هبیت ترکر</h1>
+                <div class="header-actions">
+                    <button class="icon-btn" id="btnAnalytics" title="آمار">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                    </button>
+                    <button class="icon-btn" id="btnSettings" title="تنظیمات">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                    <button class="icon-btn" id="btnTheme">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="level-container">
+                <div class="level-badge" id="userLevel">1</div>
+                <div class="level-info">
+                    <div class="level-text">
+                        <span id="levelTitle">کاربر تازه‌کار</span>
+                        <span id="xpText">0 XP</span>
+                    </div>
+                    <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- FILTERS -->
+        <div class="categories-filter" id="catFilters">
+            <!-- Generated by JS -->
+        </div>
+
+        <!-- CALENDAR WIDGET (New Design) -->
+        <div class="calendar-widget">
+            <div class="calendar-header">
+                <button class="cal-nav-btn" id="prevMonth">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="cal-title" id="calTitle">...</div>
+                <button class="cal-nav-btn" id="nextMonth">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+            
+            <div class="calendar-grid-wrapper collapsed" id="calWrapper">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- JS will inject headers + days here -->
+                </div>
+            </div>
+
+            <div class="calendar-toggle collapsed" id="calToggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+        </div>
+
+        <!-- LIST HEADER -->
+        <div class="list-header">
+            <span id="dateTitle">امروز</span>
+            <span id="activeCount">0 عادت</span>
+        </div>
+
+        <!-- LIST -->
+        <div class="habits-list" id="habitsList"></div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" id="btnAddHabit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <!-- FORM MODAL -->
+    <div class="modal" id="habitModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 24px; text-align: center;">تعریف عادت جدید</h3>
+            <form id="habitForm">
+                <div class="form-group">
+                    <label class="form-label">عنوان عادت</label>
+                    <input type="text" class="form-input" id="habitName" required placeholder="مثلاً: کتاب خواندن">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">دسته‌بندی</label>
+                    <select class="form-select" id="habitCategory">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تکرار</label>
+                    <select class="form-select" id="habitFrequency">
+                        <option value="daily">هر روز</option>
+                        <option value="weekly">هفتگی (فقط جمعه‌ها)</option>
+                        <option value="custom">روزهای خاص (انتخابی)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customDaysGroup" style="display: none;">
+                    <label class="form-label">روزهای هفته:</label>
+                    <div class="days-grid">
+                        <label><input type="checkbox" class="day-checkbox" value="0"><div class="day-label">ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="1"><div class="day-label">۱ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="2"><div class="day-label">۲ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="3"><div class="day-label">۳ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="4"><div class="day-label">۴ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="5"><div class="day-label">۵ش</div></label>
+                        <label><input type="checkbox" class="day-checkbox" value="6"><div class="day-label">ج</div></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">آیکون</label>
+                    <div class="icon-grid" id="iconSelector">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رنگ</label>
+                    <div class="color-grid" id="colorSelector" style="margin-top: 8px;">
+                        <div class="color-opt selected" data-color="#4f46e5" style="background:#4f46e5"></div>
+                        <div class="color-opt" data-color="#10b981" style="background:#10b981"></div>
+                        <div class="color-opt" data-color="#f59e0b" style="background:#f59e0b"></div>
+                        <div class="color-opt" data-color="#ef4444" style="background:#ef4444"></div>
+                        <div class="color-opt" data-color="#ec4899" style="background:#ec4899"></div>
+                        <div class="color-opt" data-color="#06b6d4" style="background:#06b6d4"></div>
+                    </div>
+                </div>
+                <div class="form-group" style="background: var(--bg-body); padding: 12px; border-radius: 12px;">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 0;">
+                        <input type="checkbox" id="habitTimer" style="width: 20px; height: 20px;">
+                        <span style="font-weight: 600;">تایمر (پومودورو)</span>
+                    </label>
+                    <div id="timerSettings" style="display: none; margin-top: 12px;">
+                        <label class="form-label">مدت زمان (دقیقه):</label>
+                        <input type="number" id="timerDuration" class="form-input" value="25" min="1" max="180">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="button" class="form-input" id="btnCloseModal" style="background: transparent; border-color: transparent;">لغو</button>
+                    <button type="submit" class="form-input" style="background: var(--primary); color: white; font-weight: bold; border: none;">ذخیره</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TIMER COMPLETE MODAL -->
+    <div class="modal" id="timerCompleteModal" style="z-index: 3500;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding-top: 40px;">
+            <div style="font-size: 4rem; margin-bottom: 16px;">🎉</div>
+            <h3 style="margin-bottom: 12px;">زمان تمام شد!</h3>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">تمرکز عالی بود. آیا این عادت را به عنوان «انجام شده» ثبت کنم؟</p>
+            <button class="form-input" id="btnConfirmTimer" style="background: var(--primary); color: white; font-weight: bold; font-size: 1.1rem;">بله، ثبت کن</button>
+            <button class="form-input" id="btnCancelTimerFinish" style="background: transparent; color: var(--text-muted); margin-top: 10px; border: none;">خیر، فقط ببند</button>
+        </div>
+    </div>
+
+    <!-- GENERIC CONFIRMATION MODAL -->
+    <div class="modal" id="confirmModal" style="z-index: 4000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding-top: 30px;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">⚠️</div>
+            <h3 id="confirmTitle" style="margin-bottom: 12px;">آیا مطمئن هستید؟</h3>
+            <p id="confirmMessage" style="color: var(--text-muted); margin-bottom: 30px;">این عملیات غیرقابل بازگشت است.</p>
+            <button class="form-input" id="btnConfirmYes" style="background: var(--danger); color: white; font-weight: bold; font-size: 1.1rem;">بله</button>
+            <button class="form-input" id="btnConfirmNo" style="background: transparent; color: var(--text-muted); margin-top: 10px; border: none;">خیر</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">تنظیمات</h3>
+            
+            <button class="form-input" id="btnManageCats" style="margin-bottom: 12px; background: var(--bg-body); border: 1px solid var(--border); text-align: right; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                مدیریت دسته‌بندی‌ها
+            </button>
+            
+            <button class="form-input" id="btnExport" style="margin-bottom: 12px; text-align: right;">📤 پشتیبان‌گیری (Export)</button>
+            <button class="form-input" id="btnImport" style="margin-bottom: 12px; text-align: right;">📥 بازگردانی (Import)</button>
+            <input type="file" id="fileImport" style="display: none;" accept=".json">
+            <button class="form-input" id="btnReset" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; text-align: right;">⚠️ حذف همه اطلاعات</button>
+            <button class="form-input" id="btnCloseSettings" style="margin-top: 20px; border: none;">بستن</button>
+        </div>
+    </div>
+
+    <!-- CATEGORY MANAGER MODAL -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">مدیریت دسته‌بندی‌ها</h3>
+            <div class="cat-list" id="categoryList">
+                <!-- Injected via JS -->
+            </div>
+            <div class="add-cat-form">
+                <input type="text" id="newCatName" class="form-input" placeholder="نام دسته جدید">
+                <div class="color-picker-wrapper">
+                    <input type="color" id="newCatColor" class="color-picker-input" value="#4f46e5">
+                </div>
+                <button class="icon-btn" id="btnAddCategory" style="background: var(--success); color: white; border: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            <button class="form-input" id="btnCloseCatManager" style="margin-top: 20px; border: none;">بازگشت</button>
+        </div>
+    </div>
+
+    <!-- ANALYTICS MODAL -->
+    <div class="modal" id="analyticsModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>آمار عملکرد</h3>
+                <button class="icon-btn" id="btnCloseAnalytics" style="width: 36px; height: 36px; border: none;">✕</button>
+            </div>
+            <div class="chart-container">
+                <h4>نرخ موفقیت (۷ روز گذشته)</h4>
+                <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 10px 0;" id="successRateText">0%</div>
+                <div style="height: 12px; background: var(--bg-body); border-radius: 6px; overflow: hidden;">
+                    <div id="successRateBar" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.8s;"></div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h4>فعالیت‌های سالانه</h4>
+                <div class="heatmap-grid" id="heatmapGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTES MODAL -->
+    <div class="modal" id="noteModal">
+        <div class="modal-content">
+            <h3>یادداشت روزانه</h3>
+            <p id="noteDateDisplay" style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.9rem;"></p>
+            <textarea id="noteInput" class="form-input" rows="6" placeholder="یادداشت خود را اینجا بنویسید..."></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="form-input" id="btnCloseNote" style="background: transparent;">بستن</button>
+                <button class="form-input" id="btnSaveNote" style="background: var(--primary); color: white;">ذخیره</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIMER OVERLAY -->
+    <div class="timer-overlay" id="timerOverlay">
+        <div class="timer-circle">
+            <span class="timer-time" id="timerDisplay">25:00</span>
+        </div>
+        <h2 id="timerHabitTitle" style="margin-bottom: 40px;">نام عادت</h2>
+        <div class="timer-btns">
+            <button class="big-btn" id="btnStopTimer" style="background: var(--danger);">
+                <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"></rect></svg>
+            </button>
+            <button class="big-btn" id="btnToggleTimer" style="background: var(--primary);">
+                <svg viewBox="0 0 24 24" id="playIcon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+        </div>
+        <button id="btnExitTimer" style="margin-top: 40px; background: none; border: none; color: var(--text-muted); font-size: 1rem; padding: 10px 20px;">خروج</button>
+    </div>
+
+    <div class="toast" id="toast">
+        <span>پیام سیستم</span>
+    </div>
+
+    <script>
+        // --- OUTLINE ICONS (SVG Strings) ---
+        const ICONS = {
+            target: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+            book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+            gym: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 7h12M6 17h12M4 5v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z"/></svg>`,
+            water: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+            sleep: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+            code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+            sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+            heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+            music: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+            pen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`
+        };
+
+        const farsiDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+        const toFarsi = n => n.toString().replace(/\d/g, x => farsiDigits[x]);
+        const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+        // --- JALALI LOGIC (Standard) ---
+        function toJalaali(gy, gm, gd) {
+            var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+            var gy2 = (gm > 2) ? (gy + 1) : gy;
+            var days = 355666 + (365 * gy) + ~~((gy2 + 3) / 4) - ~~((gy2 + 99) / 100) + ~~((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+            var jy = -1595 + (33 * ~~(days / 12053));
+            days %= 12053;
+            jy += 4 * ~~(days / 1461);
+            days %= 1461;
+            if (days > 365) { jy += ~~((days - 1) / 365); days = (days - 1) % 365; }
+            var jm, jd;
+            if (days < 186) { jm = 1 + ~~(days / 31); jd = 1 + (days % 31); }
+            else { jm = 7 + ~~((days - 186) / 30); jd = 1 + ((days - 186) % 30); }
+            return { jy: jy, jm: jm, jd: jd };
+        }
+
+        function toGregorian(jy, jm, jd) {
+            var jy2 = (jy + 1595);
+            var days = -355668 + (365 * jy2) + (~~(jy2 / 33) * 8) + ~~(((jy2 % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+            var gy = 400 * ~~(days / 146097); days %= 146097;
+            if (days > 36524) { gy += 100 * ~~(--days / 36524); days %= 36524; if (days >= 365) days++; }
+            gy += 4 * ~~(days / 1461); days %= 1461;
+            if (days > 365) { gy += ~~((days - 1) / 365); days = (days - 1) % 365; }
+            var gd = days + 1;
+            var gm = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            if ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) gm[2] = 29;
+            var i;
+            for (i = 0; i < 13; i++) { if (gd <= gm[i]) break; gd -= gm[i]; }
+            return { gy: gy, gm: i, gd: gd };
+        }
+
+        function jalaaliMonthLength(jy, jm) {
+            if (jm <= 6) return 31;
+            if (jm <= 11) return 30;
+            const rem = jy % 33;
+            const isLeap = [1, 5, 9, 13, 17, 22, 26, 30].includes(rem); 
+            return isLeap ? 30 : 29;
+        }
+
+        // --- STATE ---
+        let habits = JSON.parse(localStorage.getItem('habits_ultimate')) || [];
+        let userStats = JSON.parse(localStorage.getItem('user_stats_ultimate')) || { xp: 0, level: 1 };
+        let categories = JSON.parse(localStorage.getItem('habit_categories')) || [
+            {id: 'health', name: 'سلامتی', color: '#10b981'},
+            {id: 'learn', name: 'یادگیری', color: '#4f46e5'},
+            {id: 'work', name: 'کار', color: '#f59e0b'}
+        ];
+        
+        let editId = null;
+        let selectedDate = getTodayDate();
+        let activeFilter = 'all';
+        let timerInterval = null, timeLeft = 0, isTimerRunning = false, activeTimerHabitId = null;
+        let currentNoteId = null;
+        let isCalExpanded = false;
+        let viewJYear, viewJMonth;
+        let pendingConfirmAction = null;
+
+        // --- DOM ELEMENTS ---
+        const el = id => document.getElementById(id);
+        const els = {
+            list: el('habitsList'), modal: el('habitModal'), settings: el('settingsModal'),
+            analytics: el('analyticsModal'), note: el('noteModal'), 
+            timer: el('timerOverlay'), toast: el('toast'), form: el('habitForm'),
+            calGrid: el('calendarGrid'), calTitle: el('calTitle'), calToggle: el('calToggle'),
+            calWrapper: el('calWrapper'), catModal: el('categoryModal'), catList: el('categoryList'),
+            timerCompleteModal: el('timerCompleteModal'), confirmModal: el('confirmModal')
+        };
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            const now = new Date();
+            const j = toJalaali(now.getFullYear(), now.getMonth()+1, now.getDate());
+            viewJYear = j.jy;
+            viewJMonth = j.jm;
+
+            // Embedded Service Worker Registration Logic for PWA
+            if ('serviceWorker' in navigator) {
+                // Since we are single file, we try to register a dummy SW if possible or just let the manifest handle "Install"
+                // A real offline SW needs a separate file. We'll skip SW registration to avoid 404s on GitHub Pages 
+                // but keep the manifest link for "Add to Home Screen".
+                console.log('PWA features ready');
+            }
+
+            // Inject Manifest
+            const manifest = {
+                "name": "هبیت ترکر پرو",
+                "short_name": "HabitTracker",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#f8fafc",
+                "theme_color": "#4f46e5",
+                "orientation": "portrait",
+                "icons": [
+                    {
+                        "src": "https://cdn-icons-png.flaticon.com/512/4305/4305432.png",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+            const stringManifest = JSON.stringify(manifest);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            document.getElementById('my-manifest-placeholder').setAttribute('href', manifestURL);
+
+            renderIcons();
+            updateCategoriesUI();
+            renderCalendar();
+            renderList();
+            updateStats();
+            setupEvents();
+        });
+
+        function renderIcons() {
+            const container = el('iconSelector');
+            container.innerHTML = '';
+            Object.keys(ICONS).forEach((key, index) => {
+                const div = document.createElement('div');
+                div.className = `icon-opt ${index === 0 ? 'selected' : ''}`;
+                div.dataset.icon = key;
+                div.innerHTML = ICONS[key];
+                div.onclick = function() {
+                    document.querySelectorAll('.icon-opt').forEach(x=>x.classList.remove('selected'));
+                    this.classList.add('selected');
+                };
+                container.appendChild(div);
+            });
+        }
+
+        // --- CUSTOM CONFIRM ---
+        function showConfirm(message, action, title = "آیا مطمئن هستید؟", isDanger = false) {
+            el('confirmTitle').textContent = title;
+            el('confirmMessage').textContent = message;
+            const btnYes = el('btnConfirmYes');
+            btnYes.style.background = isDanger ? 'var(--danger)' : 'var(--primary)';
+            
+            pendingConfirmAction = action;
+            els.confirmModal.classList.add('active');
+        }
+
+        el('btnConfirmYes').onclick = () => {
+            if (pendingConfirmAction) pendingConfirmAction();
+            els.confirmModal.classList.remove('active');
+            pendingConfirmAction = null;
+        };
+        el('btnConfirmNo').onclick = () => {
+            els.confirmModal.classList.remove('active');
+            pendingConfirmAction = null;
+        };
+
+        // --- CATEGORY MANAGEMENT ---
+        function updateCategoriesUI() {
+            const filterContainer = el('catFilters');
+            
+            // Explicitly create the "All" button so we can attach an event listener properly
+            filterContainer.innerHTML = ''; 
+            const allBtn = document.createElement('button');
+            allBtn.className = `cat-btn ${activeFilter==='all'?'active':''}`;
+            allBtn.innerHTML = 'همه';
+            allBtn.onclick = () => {
+                activeFilter = 'all';
+                updateCategoriesUI();
+                renderList();
+            };
+            filterContainer.appendChild(allBtn);
+
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `cat-btn ${activeFilter===cat.id?'active':''}`;
+                btn.innerHTML = `<div class="cat-dot" style="color:${cat.color}"></div>${cat.name}`;
+                btn.onclick = () => {
+                    activeFilter = cat.id;
+                    updateCategoriesUI(); 
+                    renderList();
+                };
+                filterContainer.appendChild(btn);
+            });
+
+            const select = el('habitCategory');
+            select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if(categories.length === 0) select.innerHTML = `<option value="other">سایر</option>`;
+
+            localStorage.setItem('habit_categories', JSON.stringify(categories));
+        }
+
+        function renderCategoryManager() {
+            els.catList.innerHTML = '';
+            categories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'cat-item';
+                item.innerHTML = `
+                    <div class="cat-info">
+                        <div class="cat-color-circle" style="background:${cat.color}"></div>
+                        <span>${cat.name}</span>
+                    </div>
+                    <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                `;
+                els.catList.appendChild(item);
+            });
+        }
+
+        window.deleteCategory = function(id) {
+            const usedCount = habits.filter(h => h.category === id).length;
+            
+            if(usedCount > 0) {
+                showConfirm(`این دسته برای ${toFarsi(usedCount)} عادت استفاده شده است. با حذف آن، عادت‌ها به دسته «سایر» منتقل می‌شوند.`, () => {
+                    habits.forEach(h => { if (h.category === id) h.category = 'other'; });
+                    performDeleteCategory(id);
+                }, 'حذف دسته در حال استفاده', true);
+            } else {
+                showConfirm('آیا از حذف این دسته‌بندی اطمینان دارید؟', () => {
+                    performDeleteCategory(id);
+                }, 'حذف دسته', true);
+            }
+        };
+
+        function performDeleteCategory(id) {
+            categories = categories.filter(c => c.id !== id);
+            if(activeFilter === id) activeFilter = 'all';
+            updateCategoriesUI(); renderCategoryManager(); renderList();
+            showToast('دسته حذف شد', 'success');
+        }
+
+        el('btnAddCategory').onclick = () => {
+            const name = el('newCatName').value.trim();
+            const color = el('newCatColor').value;
+            if(!name) return;
+            
+            categories.push({ id: 'cat_' + Date.now(), name, color });
+            el('newCatName').value = '';
+            updateCategoriesUI();
+            renderCategoryManager();
+        };
+
+        // --- CALENDAR RENDER ---
+        function renderCalendar() {
+            const months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+            els.calTitle.textContent = `${months[viewJMonth-1]} ${toFarsi(viewJYear)}`;
+
+            els.calGrid.innerHTML = '';
+            
+            const dayNames = ['ش','ی','د','س','چ','پ','ج'];
+            dayNames.forEach(dn => {
+                const dHeader = document.createElement('div');
+                dHeader.className = 'day-header';
+                dHeader.textContent = dn;
+                els.calGrid.appendChild(dHeader);
+            });
+
+            const gDateOfFirst = toGregorian(viewJYear, viewJMonth, 1);
+            const dObj = new Date(gDateOfFirst.gy, gDateOfFirst.gm - 1, gDateOfFirst.gd, 12, 0, 0);
+            const startDayOfWeek = (dObj.getDay() + 1) % 7;
+            const monthLen = jalaaliMonthLength(viewJYear, viewJMonth);
+
+            for(let i=0; i<startDayOfWeek; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cal-day empty';
+                els.calGrid.appendChild(cell);
+            }
+
+            for(let d=1; d<=monthLen; d++) {
+                const g = toGregorian(viewJYear, viewJMonth, d);
+                const mm = String(g.gm).padStart(2,'0');
+                const dd = String(g.gd).padStart(2,'0');
+                const isoDate = `${g.gy}-${mm}-${dd}`;
+                
+                const isToday = isoDate === getTodayDate();
+                const isSelected = isoDate === selectedDate;
+                const hasActivity = habits.some(h => h.completedDates?.includes(isoDate));
+
+                const cell = document.createElement('div');
+                cell.className = `cal-day ${isToday?'today':''} ${isSelected?'selected':''}`;
+                cell.innerHTML = `<span>${toFarsi(d)}</span>${hasActivity ? '<div class="cal-dot"></div>' : ''}`;
+                cell.onclick = () => {
+                    selectedDate = isoDate;
+                    renderCalendar();
+                    renderList();
+                };
+                els.calGrid.appendChild(cell);
+            }
+        }
+
+        function renderList() {
+            els.list.innerHTML = '';
+            
+            const parts = selectedDate.split('-').map(Number);
+            const j = toJalaali(parts[0], parts[1], parts[2]);
+            const months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+            const jalaliDateStr = `${toFarsi(j.jd)} ${months[j.jm-1]}`;
+            el('dateTitle').textContent = jalaliDateStr;
+
+            const dObj = new Date(selectedDate);
+            const pDayIndex = (dObj.getDay() + 1) % 7; 
+
+            const activeHabits = habits.filter(h => {
+                if(activeFilter !== 'all' && h.category !== activeFilter) return false;
+                if(h.frequency === 'daily') return true;
+                if(h.frequency === 'weekly') return pDayIndex === 6;
+                if(h.frequency === 'custom' && h.customDays) return h.customDays.includes(pDayIndex);
+                return true;
+            });
+
+            el('activeCount').textContent = `${toFarsi(activeHabits.length)} عادت`;
+
+            if(activeHabits.length === 0) {
+                els.list.innerHTML = `<div style="text-align:center; padding:60px 20px; opacity:0.6;">
+                    <div style="font-size:3rem; margin-bottom:10px;">☕</div>
+                    <p>هیچ عادتی برای این روز نیست</p>
+                </div>`;
+                return;
+            }
+
+            activeHabits.forEach(h => {
+                const isDone = h.completedDates && h.completedDates.includes(selectedDate);
+                const hasNote = h.notes && h.notes[selectedDate];
+                const category = categories.find(c => c.id === h.category);
+                const catName = category ? category.name : 'سایر';
+                const iconSvg = ICONS[h.icon] || ICONS['target'];
+
+                const card = document.createElement('div');
+                card.className = 'habit-card';
+                
+                let mainBtn = '';
+                if(h.hasTimer && !isDone) {
+                    mainBtn = `<button class="check-btn play-btn" onclick="startTimer('${h.id}')">
+                        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </button>`;
+                } else {
+                    mainBtn = `<button class="check-btn ${isDone?'checked':''}" onclick="toggleHabit('${h.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="habit-header">
+                        <div class="habit-icon-box" style="color:${h.color}; background:${h.color}15">${iconSvg}</div>
+                        <div class="habit-info">
+                            <div class="habit-title" style="${isDone?'text-decoration:line-through;opacity:0.5':''}">${h.name}</div>
+                            <div class="habit-meta">
+                                <span class="habit-badge" style="color:${category ? category.color : '#999'}">${catName}</span>
+                                ${calculateStreak(h) > 0 ? `<span>🔥 ${toFarsi(calculateStreak(h))}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="habit-actions">
+                        <div class="action-group">
+                            <button class="mini-btn" onclick="editHabit('${h.id}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                            <button class="mini-btn" onclick="openNote('${h.id}')" style="${hasNote?'color:var(--primary)':''}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </button>
+                            <button class="mini-btn" onclick="deleteHabit('${h.id}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                        ${mainBtn}
+                    </div>
+                `;
+                els.list.appendChild(card);
+            });
+        }
+
+        // --- LOGIC FUNCTIONS ---
+        function toggleHabit(id) {
+            const h = habits.find(x => x.id === id);
+            if(!h.completedDates) h.completedDates = [];
+            const idx = h.completedDates.indexOf(selectedDate);
+            if(idx > -1) { h.completedDates.splice(idx, 1); addXP(-10); } 
+            else { h.completedDates.push(selectedDate); addXP(10); showToast('عالی بود! 🎉'); }
+            save(); renderList(); renderCalendar();
+        }
+
+        function startTimer(id) {
+            activeTimerHabitId = id;
+            const h = habits.find(x=>x.id===id);
+            el('timerHabitTitle').textContent = h.name;
+            timeLeft = (h.timerDuration || 25) * 60;
+            updateTimerDisplay();
+            els.timer.classList.add('active');
+            toggleTimer(true);
+        }
+
+        function toggleTimer(forceStart = false) {
+            const btn = el('btnToggleTimer');
+            if(!isTimerRunning || forceStart) {
+                if(isTimerRunning && forceStart) clearInterval(timerInterval);
+                isTimerRunning = true;
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        els.timer.classList.remove('active'); // Close timer overlay
+                        
+                        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                        audio.play();
+                        
+                        // Open confirmation
+                        els.timerCompleteModal.classList.add('active');
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+            }
+        }
+
+        function stopTimerLogic() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            els.timer.classList.remove('active');
+            activeTimerHabitId = null;
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft/60);
+            const s = timeLeft%60;
+            el('timerDisplay').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        // --- EVENTS & SETUP ---
+        function setupEvents() {
+            els.calToggle.onclick = () => {
+                isCalExpanded = !isCalExpanded;
+                els.calWrapper.className = `calendar-grid-wrapper ${isCalExpanded?'':'collapsed'}`;
+                els.calToggle.className = `calendar-toggle ${isCalExpanded?'':'collapsed'}`;
+            };
+            el('prevMonth').onclick = () => {
+                viewJMonth--; if(viewJMonth < 1) { viewJMonth = 12; viewJYear--; } renderCalendar();
+            };
+            el('nextMonth').onclick = () => {
+                viewJMonth++; if(viewJMonth > 12) { viewJMonth = 1; viewJYear++; } renderCalendar();
+            };
+
+            el('btnToggleTimer').onclick = () => toggleTimer();
+            el('btnStopTimer').onclick = () => {
+                showConfirm('آیا می‌خواهید تایمر را متوقف کنید؟ پیشرفت شما ذخیره نخواهد شد.', () => {
+                    stopTimerLogic();
+                }, 'توقف تایمر', true);
+            };
+            el('btnExitTimer').onclick = () => {
+                showConfirm('آیا می‌خواهید از تایمر خارج شوید؟', () => {
+                    stopTimerLogic();
+                }, 'خروج', true);
+            };
+            
+            el('btnAnalytics').onclick = showAnalytics;
+            el('btnCloseAnalytics').onclick = () => els.analytics.classList.remove('active');
+            
+            el('btnCloseNote').onclick = () => els.note.classList.remove('active');
+            el('btnSaveNote').onclick = () => {
+                const h = habits.find(x=>x.id===currentNoteId);
+                if(!h.notes) h.notes = {};
+                const val = el('noteInput').value.trim();
+                if(val) h.notes[selectedDate] = val; else delete h.notes[selectedDate];
+                save(); renderList(); els.note.classList.remove('active');
+            };
+
+            el('btnAddHabit').onclick = () => {
+                editId=null; els.form.reset(); el('customDaysGroup').style.display='none'; el('timerSettings').style.display='none'; els.modal.classList.add('active');
+            };
+            el('btnCloseModal').onclick = () => els.modal.classList.remove('active');
+            el('habitFrequency').onchange = (e) => el('customDaysGroup').style.display = e.target.value==='custom'?'block':'none';
+            el('habitTimer').onchange = (e) => el('timerSettings').style.display = e.target.checked?'block':'none';
+            
+            // Selectors
+            document.querySelectorAll('.icon-opt').forEach(i => i.onclick = function() {
+                document.querySelectorAll('.icon-opt').forEach(x=>x.classList.remove('selected')); this.classList.add('selected');
+            });
+            document.querySelectorAll('.color-opt').forEach(i => i.onclick = function() {
+                document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected')); this.classList.add('selected');
+            });
+
+            // Form Submit
+            els.form.onsubmit = (e) => {
+                e.preventDefault();
+                const name = el('habitName').value;
+                const freq = el('habitFrequency').value;
+                const cat = el('habitCategory').value;
+                const hasTimer = el('habitTimer').checked;
+                const timerDur = parseInt(el('timerDuration').value) || 25;
+                const icon = document.querySelector('.icon-opt.selected').dataset.icon;
+                const color = document.querySelector('.color-opt.selected').dataset.color;
+                let customDays = [];
+                if(freq==='custom') document.querySelectorAll('.day-checkbox:checked').forEach(cb=>customDays.push(parseInt(cb.value)));
+
+                if(editId) {
+                    const h = habits.find(x=>x.id===editId);
+                    Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur});
+                } else {
+                    habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, completedDates:[], notes:{} });
+                }
+                save(); els.modal.classList.remove('active'); renderList(); renderCalendar();
+            };
+
+            el('btnSettings').onclick = () => els.settings.classList.add('active');
+            el('btnCloseSettings').onclick = () => els.settings.classList.remove('active');
+            el('btnManageCats').onclick = () => { renderCategoryManager(); els.catModal.classList.add('active'); };
+            el('btnCloseCatManager').onclick = () => els.catModal.classList.remove('active');
+
+            el('btnTheme').onclick = () => {
+                const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+                document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+            };
+            el('btnExport').onclick = () => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify({habits, userStats, categories})], {type:'application/json'}));
+                a.download = `backup-${getTodayDate()}.json`; a.click();
+            };
+            el('btnImport').onclick = () => el('fileImport').click();
+            el('fileImport').onchange = (e) => {
+                const r = new FileReader();
+                r.onload = (ev) => { try {
+                    const d = JSON.parse(ev.target.result);
+                    if(d.habits) { habits=d.habits; userStats=d.userStats||userStats; categories=d.categories||categories; save(); localStorage.setItem('habit_categories', JSON.stringify(categories)); updateCategoriesUI(); renderList(); renderCalendar(); updateStats(); alert('بازیابی شد'); }
+                } catch { alert('فایل نامعتبر'); } };
+                if(e.target.files[0]) r.readAsText(e.target.files[0]);
+            };
+            
+            // New Reset with confirm modal
+            el('btnReset').onclick = () => {
+                showConfirm('تمام اطلاعات شما پاک خواهد شد و قابل بازگشت نیست.', () => {
+                    habits = []; userStats = { xp: 0, level: 1 };
+                    save(); updateStats(); renderList(); renderCalendar();
+                    els.settings.classList.remove('active');
+                    showToast('اطلاعات پاک شد', 'error');
+                }, 'حذف کل اطلاعات', true);
+            };
+            
+            // New Timer Confirmation Events
+            el('btnConfirmTimer').onclick = () => {
+                const h = habits.find(x=>x.id===activeTimerHabitId);
+                if(h && !h.completedDates.includes(selectedDate)) {
+                    h.completedDates.push(selectedDate);
+                    addXP(20);
+                    showToast('تمرکز تمام شد و ثبت شد! ☕️');
+                    save(); renderList(); renderCalendar();
+                }
+                els.timerCompleteModal.classList.remove('active');
+                activeTimerHabitId = null;
+            };
+            
+            el('btnCancelTimerFinish').onclick = () => {
+                els.timerCompleteModal.classList.remove('active');
+                activeTimerHabitId = null;
+            }
+        }
+
+        // --- UTILS ---
+        function calculateStreak(h) {
+            if(!h.completedDates) return 0;
+            let streak=0, d=new Date();
+            for(let i=0; i<365; i++) {
+                const ds = d.toISOString().split('T')[0];
+                if(i===0 && !h.completedDates.includes(ds)) { d.setDate(d.getDate()-1); continue; }
+                if(h.completedDates.includes(ds)) streak++; else if(i>0) break;
+                d.setDate(d.getDate()-1);
+            }
+            return streak;
+        }
+        function editHabit(id) {
+            editId=id; const h=habits.find(x=>x.id===id);
+            el('habitName').value=h.name; el('habitFrequency').value=h.frequency; el('habitCategory').value=h.category||'other';
+            el('habitTimer').checked=h.hasTimer; el('timerDuration').value=h.timerDuration||25;
+            el('customDaysGroup').style.display=h.frequency==='custom'?'block':'none';
+            el('timerSettings').style.display=h.hasTimer?'block':'none';
+            document.querySelectorAll('.day-checkbox').forEach(cb=>cb.checked=h.customDays?.includes(parseInt(cb.value)));
+            
+            document.querySelectorAll('.icon-opt').forEach(i => {
+                i.classList.remove('selected');
+                if(i.dataset.icon === (h.icon || 'target')) i.classList.add('selected');
+            });
+            
+            document.querySelectorAll('.color-opt').forEach(c=>c.classList.toggle('selected', c.dataset.color===h.color));
+            els.modal.classList.add('active');
+        }
+        function deleteHabit(id) {
+            showConfirm('این عادت و تمام سوابق آن حذف خواهد شد.', () => {
+                habits = habits.filter(x => x.id !== id);
+                save(); renderList(); renderCalendar();
+                showToast('عادت حذف شد', 'error');
+            }, 'حذف عادت', true);
+        }
+        function openNote(id) {
+            currentNoteId = id; 
+            const h = habits.find(x => x.id === id);
+            
+            // Format Jalali Date for Display
+            const parts = selectedDate.split('-').map(Number);
+            const j = toJalaali(parts[0], parts[1], parts[2]);
+            const months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+            const jalaliDateStr = `${toFarsi(j.jd)} ${months[j.jm-1]} ${toFarsi(j.jy)}`;
+
+            el('noteDateDisplay').textContent = `${h.name} - ${jalaliDateStr}`;
+            el('noteInput').value = (h.notes && h.notes[selectedDate]) || '';
+            els.note.classList.add('active');
+        }
+        function showAnalytics() {
+            els.analytics.classList.add('active');
+            const grid = el('heatmapGrid'); grid.innerHTML = '';
+            for(let i=100; i>=0; i--) {
+                const d = new Date(); d.setDate(new Date().getDate() - i);
+                const ds = d.toISOString().split('T')[0];
+                let count = 0; habits.forEach(h => { if(h.completedDates?.includes(ds)) count++; });
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                if(count>0) cell.style.background = `rgba(79, 70, 229, ${Math.min(1, count*0.4)})`;
+                grid.appendChild(cell);
+            }
+            let total=0, done=0;
+            habits.forEach(h => {
+                for(let i=0; i<7; i++) {
+                    const d = new Date(); d.setDate(new Date().getDate()-i);
+                    total++; if(h.completedDates?.includes(d.toISOString().split('T')[0])) done++;
+                }
+            });
+            const rate = total===0?0:Math.round((done/total)*100);
+            el('successRateText').textContent = `${toFarsi(rate)}%`;
+            el('successRateBar').style.width = `${rate}%`;
+        }
+        function addXP(n) { userStats.xp=Math.max(0,userStats.xp+n); updateStats(); }
+        function updateStats() {
+            const lvl = Math.floor(userStats.xp/100)+1; const cur = userStats.xp%100;
+            el('userLevel').textContent=toFarsi(lvl); el('xpText').textContent=`${toFarsi(cur)} XP`;
+            el('xpFill').style.width=`${cur}%`; localStorage.setItem('user_stats_ultimate', JSON.stringify(userStats));
+        }
+        function save() { localStorage.setItem('habits_ultimate', JSON.stringify(habits)); }
+        function showToast(m, type='success') { 
+            const icon = type === 'error' ? 
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` :
+                `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            els.toast.innerHTML = `${icon} ${m}`;
+            els.toast.style.borderLeft = `4px solid ${type==='error'?'var(--danger)':'var(--success)'}`;
+            els.toast.classList.add('show'); setTimeout(()=>els.toast.classList.remove('show'),3000); 
+        }
+    </script>
+</body>
+</html>

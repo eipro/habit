@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="HabitTracker">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4305/4305432.png">
     
-    <!-- Embedded Manifest for Single File PWA -->
+    <!-- Embedded Manifest -->
     <link rel="manifest" id="my-manifest-placeholder">
 
     <!-- Vazirmatn Font -->
@@ -28,10 +28,11 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             
-            /* Theme Colors */
+            /* Theme Colors - Light */
             --bg-body: #f8fafc;
             --bg-surface: #ffffff;
             --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
@@ -45,9 +46,11 @@
         }
 
         [data-theme="dark"] {
+            /* Theme Colors - Dark */
             --bg-body: #0f172a;
             --bg-surface: #1e293b;
             --bg-card: #1e293b;
+            --bg-input: #334155;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
@@ -85,7 +88,7 @@
             border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
         }
-        .icon-btn:hover { border-color: var(--text-muted); color: var(--text-main); }
+        .icon-btn:hover { border-color: var(--text-muted); color: var(--text-main); background: var(--bg-input); }
         .icon-btn svg { width: 20px; height: 20px; stroke-width: 2; }
 
         /* Level Progress */
@@ -107,7 +110,7 @@
         .xp-bar { height: 6px; background: var(--bg-body); border-radius: 10px; overflow: hidden; }
         .xp-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.6s ease; border-radius: 10px; }
 
-        /* --- CALENDAR (FIXED) --- */
+        /* --- CALENDAR --- */
         .calendar-widget {
             background: var(--bg-surface);
             border-radius: var(--radius-l);
@@ -199,7 +202,6 @@
         }
         .cat-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
         
-        /* FIXED: Primary color background for better contrast in dark mode */
         .cat-btn.active { 
             background: var(--primary); color: white; border-color: var(--primary);
         }
@@ -230,7 +232,7 @@
         .habit-icon-box {
             width: 48px; height: 48px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            background: var(--bg-body); flex-shrink: 0; color: var(--text-main);
+            background: var(--bg-input); flex-shrink: 0; color: var(--text-main);
         }
         .habit-icon-box svg { width: 24px; height: 24px; stroke-width: 1.5; }
         
@@ -238,7 +240,7 @@
         .habit-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: var(--text-main); }
         .habit-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
         .habit-badge { 
-            background: var(--bg-body); padding: 2px 6px; border-radius: 6px; 
+            background: var(--bg-input); padding: 2px 6px; border-radius: 6px; 
             font-weight: 500; color: var(--text-muted);
         }
 
@@ -253,7 +255,7 @@
             background: transparent; color: var(--text-muted);
             display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .mini-btn:hover { background: var(--bg-body); color: var(--text-main); }
+        .mini-btn:hover { background: var(--bg-input); color: var(--text-main); }
         .mini-btn svg { width: 18px; height: 18px; }
         
         .check-btn {
@@ -295,7 +297,7 @@
         .form-label { display: block; margin-bottom: 8px; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
         .form-input, .form-select, textarea.form-input {
             width: 100%; padding: 14px; border: 2px solid var(--border);
-            border-radius: 14px; background: var(--bg-surface); color: var(--text-main);
+            border-radius: 14px; background: var(--bg-input); color: var(--text-main);
             font-size: 1rem; font-family: inherit; transition: border 0.2s;
         }
         .form-input:focus { border-color: var(--primary); outline: none; }
@@ -304,7 +306,7 @@
         .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .cat-item { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 14px; background: var(--bg-body); border-radius: 12px;
+            padding: 10px 14px; background: var(--bg-input); border-radius: 12px;
         }
         .cat-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
         .cat-color-circle { width: 14px; height: 14px; border-radius: 50%; }
@@ -321,7 +323,6 @@
         .fab {
             position: fixed; bottom: 30px; left: 24px;
             width: 56px; height: 56px; border-radius: 18px;
-            /* FIXED: Primary color for visibility in Dark Mode */
             background: var(--primary); color: white; border: none;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             z-index: 100; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;
@@ -367,7 +368,7 @@
         .days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .day-checkbox { display: none; }
         .day-label {
-            background: var(--bg-body); padding: 12px; border-radius: 12px;
+            background: var(--bg-input); padding: 12px; border-radius: 12px;
             text-align: center; font-size: 0.9rem; cursor: pointer; border: 2px solid transparent;
             color: var(--text-muted);
         }
@@ -377,7 +378,7 @@
         
         .icon-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .icon-opt {
-            width: 50px; height: 50px; flex-shrink: 0; background: var(--bg-body); color: var(--text-muted);
+            width: 50px; height: 50px; flex-shrink: 0; background: var(--bg-input); color: var(--text-muted);
             border-radius: 14px; display: flex; align-items: center; justify-content: center;
             border: 2px solid transparent; cursor: pointer; transition: all 0.2s;
         }
@@ -392,7 +393,7 @@
         /* Analytics */
         .chart-container { margin-bottom: 24px; text-align: center; }
         .heatmap-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; margin-top: 10px; justify-content: center; }
-        .heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: var(--bg-body); }
+        .heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: var(--bg-input); }
         .badges-grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
@@ -522,7 +523,7 @@
                         <div class="color-opt" data-color="#06b6d4" style="background:#06b6d4"></div>
                     </div>
                 </div>
-                <div class="form-group" style="background: var(--bg-body); padding: 12px; border-radius: 12px;">
+                <div class="form-group" style="background: var(--bg-input); padding: 12px; border-radius: 12px;">
                     <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 0;">
                         <input type="checkbox" id="habitTimer" style="width: 20px; height: 20px;">
                         <span style="font-weight: 600;">تایمر (پومودورو)</span>
@@ -567,16 +568,21 @@
         <div class="modal-content">
             <h3 style="margin-bottom: 20px;">تنظیمات</h3>
             
-            <button class="form-input" id="btnManageCats" style="margin-bottom: 12px; background: var(--bg-body); border: 1px solid var(--border); text-align: right; display: flex; align-items: center; gap: 8px;">
+            <button class="form-input" id="btnInstall" style="display:none; margin-bottom: 12px; background: var(--primary); color: white; border: none; text-align: right; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                نصب برنامه (App)
+            </button>
+
+            <button class="form-input" id="btnManageCats" style="margin-bottom: 12px; background: var(--bg-input); border: 1px solid var(--border); text-align: right; display: flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                 مدیریت دسته‌بندی‌ها
             </button>
             
-            <button class="form-input" id="btnExport" style="margin-bottom: 12px; text-align: right;">📤 پشتیبان‌گیری (Export)</button>
-            <button class="form-input" id="btnImport" style="margin-bottom: 12px; text-align: right;">📥 بازگردانی (Import)</button>
+            <button class="form-input" id="btnExport" style="margin-bottom: 12px; text-align: right; background: var(--bg-input);">📤 پشتیبان‌گیری (Export)</button>
+            <button class="form-input" id="btnImport" style="margin-bottom: 12px; text-align: right; background: var(--bg-input);">📥 بازگردانی (Import)</button>
             <input type="file" id="fileImport" style="display: none;" accept=".json">
             <button class="form-input" id="btnReset" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; text-align: right;">⚠️ حذف همه اطلاعات</button>
-            <button class="form-input" id="btnCloseSettings" style="margin-top: 20px; border: none;">بستن</button>
+            <button class="form-input" id="btnCloseSettings" style="margin-top: 20px; border: none; background: var(--bg-input);">بستن</button>
         </div>
     </div>
 
@@ -596,7 +602,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
-            <button class="form-input" id="btnCloseCatManager" style="margin-top: 20px; border: none;">بازگشت</button>
+            <button class="form-input" id="btnCloseCatManager" style="margin-top: 20px; border: none; background: var(--bg-input);">بازگشت</button>
         </div>
     </div>
 
@@ -610,7 +616,7 @@
             <div class="chart-container">
                 <h4>نرخ موفقیت (۷ روز گذشته)</h4>
                 <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 10px 0;" id="successRateText">0%</div>
-                <div style="height: 12px; background: var(--bg-body); border-radius: 6px; overflow: hidden;">
+                <div style="height: 12px; background: var(--bg-input); border-radius: 6px; overflow: hidden;">
                     <div id="successRateBar" style="height: 100%; width: 0%; background: var(--primary); transition: width 0.8s;"></div>
                 </div>
             </div>
@@ -754,10 +760,9 @@
 
             // Embedded Service Worker Registration Logic for PWA
             if ('serviceWorker' in navigator) {
-                // Since we are single file, we try to register a dummy SW if possible or just let the manifest handle "Install"
-                // A real offline SW needs a separate file. We'll skip SW registration to avoid 404s on GitHub Pages 
-                // but keep the manifest link for "Add to Home Screen".
-                console.log('PWA features ready');
+                 // Removing direct blob registration to fix TypeError.
+                 // PWA install prompt will rely on manifest.
+                 console.log('Service Worker supported');
             }
 
             // Inject Manifest
@@ -967,7 +972,7 @@
             const parts = selectedDate.split('-').map(Number);
             const j = toJalaali(parts[0], parts[1], parts[2]);
             const months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-            const jalaliDateStr = `${toFarsi(j.jd)} ${months[j.jm-1]}`;
+            const jalaliDateStr = `${toFarsi(j.jd)} ${months[j.jm-1]} ${toFarsi(j.jy)}`;
             el('dateTitle').textContent = jalaliDateStr;
 
             const dObj = new Date(selectedDate);
@@ -1229,6 +1234,28 @@
                 els.timerCompleteModal.classList.remove('active');
                 activeTimerHabitId = null;
             }
+
+            // PWA Install Prompt Logic
+            let deferredPrompt;
+            const btnInstall = document.getElementById('btnInstall');
+            
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                btnInstall.style.display = 'flex';
+                console.log('Install prompt captured');
+            });
+            
+            btnInstall.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        btnInstall.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                }
+            });
         }
 
         // --- UTILS ---

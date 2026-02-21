@@ -676,6 +676,30 @@
             <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه روز</button>
         </div>
         </div>
+        <div style="margin-bottom: 8px;">
+            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
+        </div>
+        <div class="habit-tools">
+            <select id="habitSort" class="form-select">
+                <option value="default">مرتب‌سازی پیش‌فرض</option>
+                <option value="name">مرتب‌سازی بر اساس نام</option>
+                <option value="pinned">سنجاق‌شده‌ها اول</option>
+                <option value="done">انجام‌نشده‌ها اول</option>
+                <option value="streak">استریک بیشتر اول</option>
+                <option value="timer">تایمر طولانی‌تر اول</option>
+            </select>
+            <input class="form-input" id="quickAddInput" placeholder="ثبت سریع عادت... (Enter)">
+        </div>
+        <button class="quick-chip" id="btnToggleTools">🧰 ابزارهای بیشتر</button>
+        <div class="tool-actions" id="toolActions">
+            <button class="quick-chip" id="btnFilterUndone">📌 فقط انجام‌نشده</button>
+            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه نمایان</button>
+            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی امروز</button>
+        <button class="quick-chip" id="btnFilterTimer">⏱ فقط تایمردار</button>
+            <button class="quick-chip" id="btnFilterReminder">🔔 فقط یادآوردار</button>
+            <button class="quick-chip" id="btnResetAllFilters">🧹 پاکسازی فیلترها</button>
+            <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه روز</button>
+        </div>
 
         <!-- LIST -->
         <div class="habits-list" id="habitsList"></div>

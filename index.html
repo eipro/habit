@@ -265,6 +265,12 @@
         .app-container.focus-mode .header-subtitle, .app-container.focus-mode .summary-grid { display: none; }
         .app-container.focus-mode .header { padding-bottom: 10px; }
 
+        .habit-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .habit-tools .form-select, .habit-tools .form-input { padding: 10px 12px; font-size: 0.85rem; }
+        .tool-actions { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 10px; }
+        .tool-actions .quick-chip { font-size: 0.74rem; padding: 7px 10px; }
+        .habit-streak-tag { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; }
+
         /* --- HABIT CARDS --- */
         .list-header {
             margin-bottom: 12px; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;
@@ -578,6 +584,10 @@
                     <div class="summary-label">رکورد متوالی</div>
                     <div class="summary-value" id="headerStreak">۰ روز</div>
                 </div>
+                <div class="summary-card">
+                    <div class="summary-label">زمان برنامه‌ریزی</div>
+                    <div class="summary-value" id="headerPlannedTime">۰ دقیقه</div>
+                </div>
             </div>
         </header>
 
@@ -619,8 +629,22 @@
             <span id="dateTitle">امروز</span>
             <span id="activeCount">0 عادت</span>
         </div>
-        <div style="margin-bottom: 12px;">
-            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها...">
+        <div style="margin-bottom: 8px;">
+            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
+        </div>
+        <div class="habit-tools">
+            <select id="habitSort" class="form-select">
+                <option value="default">مرتب‌سازی پیش‌فرض</option>
+                <option value="name">مرتب‌سازی بر اساس نام</option>
+                <option value="pinned">سنجاق‌شده‌ها اول</option>
+                <option value="done">انجام‌نشده‌ها اول</option>
+            </select>
+            <input class="form-input" id="quickAddInput" placeholder="ثبت سریع عادت... (Enter)">
+        </div>
+        <div class="tool-actions">
+            <button class="quick-chip" id="btnFilterUndone">📌 فقط انجام‌نشده</button>
+            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه نمایان</button>
+            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی امروز</button>
         </div>
 
         <!-- LIST -->
@@ -758,6 +782,7 @@
             </button>
             
             <button class="form-input settings-btn" id="btnExport">📤 پشتیبان‌گیری (Export)</button>
+            <button class="form-input settings-btn" id="btnExportCsv">🧾 خروجی CSV عادت‌ها</button>
             <button class="form-input settings-btn" id="btnImport">📥 بازگردانی (Import)</button>
             <input type="file" id="fileImport" style="display: none;" accept=".json">
             <button class="form-input settings-btn" id="btnReset" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none;">⚠️ حذف همه اطلاعات</button>
@@ -873,6 +898,13 @@
 
 
         const CATEGORY_ICONS = ['🏃','📚','💼','🧘','💧','🍎','🎯','💡','💻','🎵','💤','🧹'];
+        const DEFAULT_CATEGORIES = [
+            {id: 'health', name: 'سلامتی', color: '#10b981', icon:'🏃'},
+            {id: 'learn', name: 'یادگیری', color: '#4f46e5', icon:'📚'},
+            {id: 'work', name: 'کار', color: '#f59e0b', icon:'💼'},
+            {id: 'mind', name: 'ذهن‌آگاهی', color: '#8b5cf6', icon:'🧘'},
+            {id: 'life', name: 'سبک زندگی', color: '#06b6d4', icon:'💧'}
+        ];
         const getCategoryIcon = cat => cat?.icon || '🏷️';
 
         const farsiDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
@@ -920,6 +952,7 @@
         let habits = [], userStats = { xp: 0, level: 1 }, categories = [];
         let authState = { token: null, user: 'guest' };
         let editId = null, selectedDate = getTodayDate(), activeFilter = 'all', habitSearchQuery = '';
+        let habitSortMode = 'default', filterUndoneOnly = false;
         let timerInterval = null, timeLeft = 0, isTimerRunning = false, activeTimerHabitId = null;
         let currentNoteId = null;
         let isCalExpanded = false;
@@ -973,19 +1006,28 @@
             const focusBtn = el('btnFocusMode'); if (focusBtn) focusBtn.classList.toggle('active', focusOn);
         }
 
+        function normalizeCategories(inputCategories = []) {
+            const map = new Map();
+            [...DEFAULT_CATEGORIES, ...inputCategories].forEach((c, i) => {
+                if (!c || !c.id) return;
+                map.set(c.id, {
+                    id: c.id,
+                    name: c.name || `دسته ${i+1}`,
+                    color: c.color || '#4f46e5',
+                    icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length]
+                });
+            });
+            return Array.from(map.values());
+        }
+
         function loadLocalData() {
             try {
                 habits = JSON.parse(localStorage.getItem('habits_ultimate')) || [];
                 userStats = JSON.parse(localStorage.getItem('user_stats_ultimate')) || { xp: 0, level: 1 };
-                categories = JSON.parse(localStorage.getItem('habit_categories')) || [
-                    {id: 'health', name: 'سلامتی', color: '#10b981', icon:'🏃'},
-                    {id: 'learn', name: 'یادگیری', color: '#4f46e5', icon:'📚'},
-                    {id: 'work', name: 'کار', color: '#f59e0b', icon:'💼'}
-                ];
+                categories = normalizeCategories(JSON.parse(localStorage.getItem('habit_categories')) || []);
                 const t = localStorage.getItem('auth_token');
                 const u = localStorage.getItem('auth_user');
-                categories = categories.map((c, i) => ({ ...c, icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length] }));
-                if(t && u) authState = { token: t, user: u };
+                                if(t && u) authState = { token: t, user: u };
             } catch(e) { console.error('Load Error', e); }
         }
 
@@ -1123,7 +1165,7 @@
                     if(res.ok) {
                         const data = await res.json();
                         if (data && data.habits) {
-                            habits = data.habits; userStats = data.userStats; categories = data.categories || categories;
+                            habits = data.habits; userStats = data.userStats; categories = normalizeCategories(data.categories || categories);
                             save(false); renderList(); renderCalendar(); updateStats();
                         }
                     }
@@ -1199,6 +1241,7 @@
             const activeHabits = habits.filter(h => {
                 if(activeFilter !== 'all' && h.category !== activeFilter) return false;
                 if(habitSearchQuery && !h.name.toLowerCase().includes(habitSearchQuery)) return false;
+                if(filterUndoneOnly && h.completedDates && h.completedDates.includes(selectedDate)) return false;
                 if(h.frequency === 'daily') return true;
                 if(h.frequency === 'weekly') return pDayIndex === 6;
                 if(h.frequency === 'custom' && h.customDays) return h.customDays.includes(pDayIndex);
@@ -1210,10 +1253,13 @@
             const headerCompletedCountEl = el('headerCompletedCount');
             const headerCompletionRateEl = el('headerCompletionRate');
             const headerStreakEl = el('headerStreak');
+            const headerPlannedTimeEl = el('headerPlannedTime');
             const completionRate = activeHabits.length ? Math.round((completedCount / activeHabits.length) * 100) : 0;
             if (headerHabitCountEl) headerHabitCountEl.textContent = toFarsi(activeHabits.length);
             if (headerCompletedCountEl) headerCompletedCountEl.textContent = toFarsi(completedCount);
             if (headerCompletionRateEl) headerCompletionRateEl.textContent = `${toFarsi(completionRate)}٪`;
+            const plannedMins = activeHabits.reduce((sum, h) => sum + (h.hasTimer ? (h.timerDuration || 25) : 0), 0);
+            if (headerPlannedTimeEl) headerPlannedTimeEl.textContent = `${toFarsi(plannedMins)} دقیقه`;
             if (headerStreakEl) {
                 const completedDays = new Set();
                 habits.forEach(h => (h.completedDates || []).forEach(d => completedDays.add(d)));
@@ -1227,6 +1273,9 @@
                 }
                 headerStreakEl.textContent = `${toFarsi(streak)} روز`;
             }
+            if (habitSortMode === 'name') activeHabits.sort((a,b)=>a.name.localeCompare(b.name,'fa'));
+            if (habitSortMode === 'pinned') activeHabits.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+            if (habitSortMode === 'done') activeHabits.sort((a,b)=>((a.completedDates||[]).includes(selectedDate)?1:0)-((b.completedDates||[]).includes(selectedDate)?1:0));
             if(activeHabits.length === 0) {
                 els.list.innerHTML = `<div class="empty-state"><div class="emoji">☕</div><p>برای این روز هنوز عادتی تنظیم نشده.</p></div>`; return;
             }
@@ -1234,6 +1283,7 @@
                 const isDone = h.completedDates && h.completedDates.includes(selectedDate);
                 const category = categories.find(c => c.id === h.category);
                 const catName = category ? `${getCategoryIcon(category)} ${category.name}` : '🏷️ سایر';
+                const habitStreak = (() => { let st=0; const d=new Date(selectedDate); while(true){ const ds=d.toISOString().split('T')[0]; if(!(h.completedDates||[]).includes(ds)) break; st++; d.setDate(d.getDate()-1);} return st; })();
                 const card = document.createElement('div'); card.className = 'habit-card';
                 let mainBtn = '';
                 if(h.hasTimer && !isDone) mainBtn = `<button class="check-btn play-btn" onclick="startTimer('${h.id}')"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>`;
@@ -1241,12 +1291,14 @@
                 card.innerHTML = `
                     <div class="habit-header">
                         <div class="habit-icon-box" style="color:${h.color}; background:${h.color}15">${ICONS[h.icon]||ICONS.target}</div>
-                        <div class="habit-info"><div class="habit-title" style="${isDone?'text-decoration:line-through;opacity:0.5':''}">${h.name}</div><div class="habit-meta"><span class="habit-badge" style="color:${category ? category.color : '#999'}">${catName}</span></div></div>
+                        <div class="habit-info"><div class="habit-title" style="${isDone?'text-decoration:line-through;opacity:0.5':''}">${h.pinned?'📌 ':''}${h.name}</div><div class="habit-meta"><span class="habit-badge" style="color:${category ? category.color : '#999'}">${catName}</span> <span class="habit-streak-tag">🔥 ${toFarsi(habitStreak)}</span></div></div>
                     </div>
                     <div class="habit-actions">
                         <div class="action-group">
                             <button class="mini-btn" onclick="editHabit('${h.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                             <button class="mini-btn" onclick="openNote('${h.id}')" style="${h.notes?.[selectedDate]?'color:var(--primary)':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+                            <button class="mini-btn" onclick="togglePin('${h.id}')" title="سنجاق">📌</button>
+                            <button class="mini-btn" onclick="duplicateHabit('${h.id}')" title="کپی">📄</button>
                             <button class="mini-btn" onclick="deleteHabit('${h.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                         </div>
                         ${mainBtn}
@@ -1255,6 +1307,7 @@
             });
         }
         function save(triggerSync = true) { 
+            categories = normalizeCategories(categories);
             localStorage.setItem('habits_ultimate', JSON.stringify(habits));
             localStorage.setItem('habit_categories', JSON.stringify(categories));
             localStorage.setItem('user_stats_ultimate', JSON.stringify(userStats));
@@ -1275,6 +1328,11 @@
         }
         function editHabit(id) { editId=id; const h=habits.find(x=>x.id===id); el('habitName').value=h.name; el('habitFrequency').value=h.frequency; el('habitCategory').value=h.category||'other'; el('habitTimer').checked=h.hasTimer; el('timerDuration').value=h.timerDuration||25; el('habitReminder').checked=!!h.hasReminder; el('reminderTime').value=h.reminderTime||'20:00'; el('customDaysGroup').style.display=h.frequency==='custom'?'block':'none'; el('timerSettings').style.display=h.hasTimer?'block':'none'; el('reminderSettings').style.display=h.hasReminder?'block':'none'; document.querySelectorAll('.day-checkbox').forEach(cb=>cb.checked=h.customDays?.includes(parseInt(cb.value))); document.querySelectorAll('.icon-opt').forEach(i => { i.classList.remove('selected'); if(i.dataset.icon === (h.icon || 'target')) i.classList.add('selected'); }); document.querySelectorAll('.color-opt').forEach(c=>c.classList.toggle('selected', c.dataset.color===h.color)); els.modal.classList.add('active'); }
         function deleteHabit(id) { showConfirm('این عادت حذف شود؟', () => { habits = habits.filter(x => x.id !== id); save(); renderList(); renderCalendar(); updateReminderSummary(); showToast('حذف شد', 'error'); }, 'حذف', true); }
+        function togglePin(id) { const h = habits.find(x=>x.id===id); if(!h) return; h.pinned = !h.pinned; save(); renderList(); }
+        function duplicateHabit(id) { const h = habits.find(x=>x.id===id); if(!h) return; const copy = JSON.parse(JSON.stringify(h)); copy.id = Date.now().toString(); copy.name = `${h.name} (کپی)`; copy.completedDates = []; habits.push(copy); save(); renderList(); renderCalendar(); showToast('کپی ایجاد شد'); }
+        function completeVisibleHabits() { const ds = selectedDate; let c=0; habits.forEach(h=>{ if(activeFilter!=='all' && h.category!==activeFilter) return; if(habitSearchQuery && !h.name.toLowerCase().includes(habitSearchQuery)) return; if(filterUndoneOnly && h.completedDates?.includes(ds)) return; if(!h.completedDates) h.completedDates=[]; if(!h.completedDates.includes(ds)){ h.completedDates.push(ds); c++; } }); if(c){ addXP(c*10); save(); renderList(); renderCalendar(); showToast(`${toFarsi(c)} عادت تکمیل شد`);} else showToast('چیزی برای تکمیل نبود','error'); }
+        function resetVisibleHabits() { const ds = selectedDate; let c=0; habits.forEach(h=>{ const idx=(h.completedDates||[]).indexOf(ds); if(idx>-1){ h.completedDates.splice(idx,1); c++; }}); if(c){ addXP(-c*10); save(); renderList(); renderCalendar(); showToast(`${toFarsi(c)} مورد بازنشانی شد`);} else showToast('موردی برای بازنشانی نبود','error'); }
+        function exportCsv() { const rows=[['name','category','frequency','timer','reminder','pinned']]; habits.forEach(h=>{ const cat=categories.find(c=>c.id===h.category)?.name||''; rows.push([h.name,cat,h.frequency,h.hasTimer?'yes':'no',h.hasReminder?(h.reminderTime||'yes'):'no',h.pinned?'yes':'no']);}); const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('\"','\\\"')}"`).join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=`habits-${getTodayDate()}.csv`; a.click(); }
         function openNote(id) { currentNoteId = id; const h = habits.find(x => x.id === id); el('noteDateDisplay').textContent = h.name; el('noteInput').value = (h.notes && h.notes[selectedDate]) || ''; els.note.classList.add('active'); }
         function showAnalytics() { els.analytics.classList.add('active'); const grid = el('heatmapGrid'); grid.innerHTML = ''; for(let i=100; i>=0; i--) { const d = new Date(); d.setDate(new Date().getDate() - i); const ds = d.toISOString().split('T')[0]; let count = 0; habits.forEach(h => { if(h.completedDates?.includes(ds)) count++; }); const cell = document.createElement('div'); cell.className = 'heatmap-cell'; if(count>0) cell.style.background = `rgba(79, 70, 229, ${Math.min(1, count*0.4)})`; grid.appendChild(cell); } let total=0, done=0; habits.forEach(h => { for(let i=0; i<7; i++) { const d = new Date(); d.setDate(new Date().getDate()-i); total++; if(h.completedDates?.includes(d.toISOString().split('T')[0])) done++; } }); const rate = total===0?0:Math.round((done/total)*100); el('successRateText').textContent = `${toFarsi(rate)}%`; el('successRateBar').style.width = `${rate}%`; }
         function showConfirm(m, a, t, isD) { el('confirmTitle').textContent = t; el('confirmMessage').textContent = m; el('btnConfirmYes').style.background = isD ? 'var(--danger)' : 'var(--primary)'; pendingConfirmAction = a; els.confirmModal.classList.add('active'); }
@@ -1352,6 +1410,7 @@
             const candidates = habits.filter(h => {
                 if(activeFilter !== 'all' && h.category !== activeFilter) return false;
                 if(habitSearchQuery && !h.name.toLowerCase().includes(habitSearchQuery)) return false;
+                if(filterUndoneOnly && h.completedDates && h.completedDates.includes(selectedDate)) return false;
                 if(h.frequency === 'daily') return true;
                 if(h.frequency === 'weekly') return pDayIndex === 6;
                 if(h.frequency === 'custom' && h.customDays) return h.customDays.includes(pDayIndex);
@@ -1399,6 +1458,7 @@
             el('btnManageCats').onclick = () => { renderCategoryManager(); els.catModal.classList.add('active'); }; el('btnCloseCatManager').onclick = () => els.catModal.classList.remove('active');
             el('btnTheme').onclick = () => { const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
             el('btnExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({habits, userStats, categories})], {type:'application/json'})); a.download = `backup-${getTodayDate()}.json`; a.click(); };
+            el('btnExportCsv').onclick = exportCsv;
             el('btnImport').onclick = () => el('fileImport').click();
             el('fileImport').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if(d.habits) { habits=d.habits; userStats=d.userStats||userStats; categories=(d.categories||categories).map((c, i) => ({ ...c, icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length] })); save(); updateCategoriesUI(); renderList(); renderCalendar(); updateStats(); updateReminderSummary(); alert('بازیابی شد'); } } catch { alert('فایل نامعتبر'); } }; if(e.target.files[0]) r.readAsText(e.target.files[0]); };
             el('btnReset').onclick = () => { showConfirm('حذف کل اطلاعات؟', () => { habits = []; userStats = { xp: 0, level: 1 }; save(); updateStats(); renderList(); renderCalendar(); els.settings.classList.remove('active'); }, 'هشدار', true); };
@@ -1410,6 +1470,12 @@
             el('catSearchInput').oninput = renderCategoryManager;
             el('btnResetCatFilter').onclick = () => { el('catSearchInput').value = ''; renderCategoryManager(); };
             el('habitSearchInput').oninput = (e) => { habitSearchQuery = e.target.value.trim().toLowerCase(); renderList(); };
+            el('habitSort').onchange = (e) => { habitSortMode = e.target.value; renderList(); };
+            el('btnFilterUndone').onclick = () => { filterUndoneOnly = !filterUndoneOnly; el('btnFilterUndone').classList.toggle('active', filterUndoneOnly); renderList(); };
+            el('btnCompleteVisible').onclick = completeVisibleHabits;
+            el('btnResetVisible').onclick = resetVisibleHabits;
+            el('quickAddInput').onkeydown = (e) => { if(e.key!=='Enter') return; e.preventDefault(); const name=e.target.value.trim(); if(!name) return; habits.push({ id:Date.now().toString(), name, frequency:'daily', category:categories[0]?.id||'health', customDays:[], icon:'target', color:'#4f46e5', hasTimer:false, timerDuration:25, hasReminder:false, reminderTime:'20:00', pinned:false, completedDates:[], notes:{} }); e.target.value=''; save(); renderList(); renderCalendar(); showToast('عادت سریع اضافه شد'); };
+            document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); el('habitSearchInput').focus(); } });
             el('btnJumpToday').onclick = jumpToToday;
             el('btnRandomHabit').onclick = runRandomHabit;
             el('btnFocusMode').onclick = toggleFocusMode;
@@ -1435,11 +1501,11 @@
                 const hasReminder = el('habitReminder').checked; const reminderTime = el('reminderTime').value || '20:00';
                 const icon = document.querySelector('.icon-opt.selected').dataset.icon; const color = document.querySelector('.color-opt.selected').dataset.color;
                 let customDays = []; if(freq==='custom') document.querySelectorAll('.day-checkbox:checked').forEach(cb=>customDays.push(parseInt(cb.value)));
-                if(editId) { const h = habits.find(x=>x.id===editId); Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime}); }
-                else { habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, completedDates:[], notes:{} }); }
+                if(editId) { const h = habits.find(x=>x.id===editId); Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, pinned: !!h.pinned}); }
+                else { habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, pinned:false, completedDates:[], notes:{} }); }
                 save(); updateReminderSummary(); els.modal.classList.remove('active'); renderList(); renderCalendar();
             };
-            window.deleteCategory = function(id) { const linkedHabits = habits.filter(h => h.category === id).length; if (linkedHabits > 0 && !confirm(`این دسته ${toFarsi(linkedHabits)} عادت دارد. حذف شود؟`)) return; categories = categories.filter(c => c.id !== id); habits.forEach(h => { if (h.category === id) h.category = 'other'; }); save(); renderCategoryManager(); updateCategoriesUI(); renderList(); showToast('دسته حذف شد'); };
+            window.deleteCategory = function(id) { if (DEFAULT_CATEGORIES.some(c => c.id === id)) return showToast('دسته پیش‌فرض قابل حذف نیست', 'error'); if (categories.length <= DEFAULT_CATEGORIES.length) return showToast('حداقل دسته‌های پیش‌فرض باید بمانند', 'error'); const linkedHabits = habits.filter(h => h.category === id).length; if (linkedHabits > 0 && !confirm(`این دسته ${toFarsi(linkedHabits)} عادت دارد. حذف شود؟`)) return; categories = normalizeCategories(categories.filter(c => c.id !== id)); const fallbackCategory = categories[0]?.id || DEFAULT_CATEGORIES[0].id; habits.forEach(h => { if (h.category === id) h.category = fallbackCategory; }); save(); renderCategoryManager(); updateCategoriesUI(); renderList(); showToast('دسته حذف شد'); };
         }
     </script>
 </body>

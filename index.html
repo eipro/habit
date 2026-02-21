@@ -992,6 +992,7 @@
         let viewJYear, viewJMonth;
         let pendingConfirmAction = null;
         let isAuthModeLogin = true;
+        let reminderTimeouts = [];
 
         // --- DOM ELEMENTS ---
         const el = id => document.getElementById(id);
@@ -1047,6 +1048,7 @@
             els.app.classList.toggle('focus-mode', focusOn);
             setupEvents();
             updateNotifyButtonStatus();
+            scheduleTodaysReminders({ silent: true });
             const focusBtn = el('btnFocusMode'); if (focusBtn) focusBtn.classList.toggle('active', focusOn);
         }
 
@@ -1410,6 +1412,7 @@
             localStorage.setItem('habit_categories', JSON.stringify(categories));
             localStorage.setItem('user_stats_ultimate', JSON.stringify(userStats));
             if(triggerSync && authState.token) { el('btnSync').classList.add('unsynced'); }
+            scheduleTodaysReminders({ silent: true });
         }
         function toggleHabit(id) { const h = habits.find(x => x.id === id); if(!h.completedDates) h.completedDates = []; const idx = h.completedDates.indexOf(selectedDate); if(idx > -1) { h.completedDates.splice(idx, 1); addXP(-10); } else { h.completedDates.push(selectedDate); addXP(10); showToast('عالی بود! 🎉'); } save(); renderList(); renderCalendar(); }
         function startTimer(id) { activeTimerHabitId = id; const h = habits.find(x=>x.id===id); el('timerHabitTitle').textContent = h.name; timeLeft = (h.timerDuration || 25) * 60; updateTimerDisplay(); els.timer.classList.add('active'); toggleTimer(true); }
@@ -1474,24 +1477,60 @@
             const total = habits.filter(h => h.hasReminder && h.reminderTime).length;
             el('reminderSummary').textContent = total ? `${toFarsi(total)} یادآور فعال تعریف شده است.` : 'یادآوری فعال نشده است.';
         }
-        function scheduleTodaysReminders() {
-            if (!('Notification' in window)) return showToast('مرورگر از اعلان پشتیبانی نمی‌کند', 'error');
-            if (Notification.permission !== 'granted') return showToast('ابتدا اعلان را فعال کنید', 'error');
+        function clearScheduledReminderTimeouts() {
+            reminderTimeouts.forEach(id => clearTimeout(id));
+            reminderTimeouts = [];
+        }
+        function isHabitActiveForDate(habit, dateStr) {
+            const dObj = new Date(dateStr);
+            const pDayIndex = (dObj.getDay() + 1) % 7;
+            if (habit.frequency === 'daily') return true;
+            if (habit.frequency === 'weekly') return pDayIndex === 6;
+            if (habit.frequency === 'custom' && habit.customDays) return habit.customDays.includes(pDayIndex);
+            return true;
+        }
+        async function showHabitReminderNotification(habitName) {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification(`یادآور عادت: ${habitName}`, { body: `زمان انجام «${habitName}» رسید 💪` });
+                    return;
+                } catch (e) {
+                    console.warn('SW notification failed, fallback to Notification API', e);
+                }
+            }
+            new Notification(`یادآور عادت: ${habitName}`, { body: `زمان انجام «${habitName}» رسید 💪` });
+        }
+        function scheduleTodaysReminders(options = {}) {
+            const { silent = false } = options;
+            const today = getTodayDate();
+            clearScheduledReminderTimeouts();
+
+            if (!('Notification' in window)) {
+                if (!silent) showToast('مرورگر از اعلان پشتیبانی نمی‌کند', 'error');
+                return;
+            }
+            if (Notification.permission !== 'granted') {
+                if (!silent) showToast('ابتدا اعلان را فعال کنید', 'error');
+                return;
+            }
             const now = new Date();
             let count = 0;
             habits.forEach(h => {
                 if (!h.hasReminder || !h.reminderTime) return;
+                if (!isHabitActiveForDate(h, today)) return;
                 const [hour, minute] = h.reminderTime.split(':').map(Number);
                 const reminderDate = new Date();
                 reminderDate.setHours(hour, minute, 0, 0);
                 const delay = reminderDate.getTime() - now.getTime();
                 if (delay <= 0) return;
                 count++;
-                setTimeout(() => {
-                    new Notification(`یادآور عادت: ${h.name}`, { body: `زمان انجام «${h.name}» رسید 💪` });
+                const timeoutId = setTimeout(() => {
+                    showHabitReminderNotification(h.name);
                 }, delay);
+                reminderTimeouts.push(timeoutId);
             });
-            showToast(count ? `${toFarsi(count)} یادآور برای امروز زمان‌بندی شد` : 'برای امروز یادآور آینده‌ای پیدا نشد', count ? 'success' : 'error');
+            if (!silent) showToast(count ? `${toFarsi(count)} یادآور برای امروز زمان‌بندی شد` : 'برای امروز یادآور آینده‌ای پیدا نشد', count ? 'success' : 'error');
         }
         function jumpToToday() {
             selectedDate = getTodayDate();

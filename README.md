@@ -17,6 +17,7 @@
 - `Service Worker` برای قابلیت‌های PWA و Push
 - `localStorage` برای ذخیره محلی
 - Cloudflare Worker API برای احراز هویت و Sync
+- **Android (Kotlin + WebView)** برای اجرای همین اپ روی اندروید
 
 ---
 
@@ -24,14 +25,17 @@
 
 ```text
 .
-├── index.html   # کل UI و منطق برنامه
+├── index.html   # کل UI و منطق برنامه وب
 ├── sw.js        # سرویس ورکر (PWA / Push)
+├── android-app/
+│   ├── app/src/main/java/com/habit/tracker/MainActivity.kt
+│   └── app/src/main/assets/www/  # نسخه embed شده index.html + sw.js
 └── README.md
 ```
 
 ---
 
-## اجرای پروژه (لوکال)
+## اجرای پروژه وب (لوکال)
 
 به خاطر Service Worker، بهتر است پروژه با یک سرور ساده اجرا شود (نه `file://`).
 
@@ -45,6 +49,22 @@ python -m http.server 8080
 ```bash
 npx serve .
 ```
+
+---
+
+## اجرای نسخه اندروید
+
+پوشه `android-app` یک پروژه آماده Android Studio است که اپ را با **Kotlin** و `WebView` اجرا می‌کند.
+
+1. Android Studio را باز کنید.
+2. گزینه **Open** را بزنید و مسیر `android-app` را انتخاب کنید.
+3. اجازه دهید Gradle Sync انجام شود.
+4. روی Emulator یا گوشی واقعی Run کنید.
+
+صفحه اصلی از مسیر زیر لود می‌شود:
+- `file:///android_asset/www/index.html`
+
+> نکته: برای انتقال تغییرات جدید وب به اندروید، فایل‌های `index.html` و `sw.js` را به مسیر `android-app/app/src/main/assets/www/` کپی کنید.
 
 ---
 
@@ -99,9 +119,10 @@ npx serve .
 
 ## نکات توسعه
 
-- پروژه فعلاً بدون build step است.
-- برای تغییر UI/logic کافی است `index.html` را ویرایش کنید.
+- پروژه وب فعلاً بدون build step است.
+- برای تغییر UI/logic وب کافی است `index.html` را ویرایش کنید.
 - برای رفتارهای PWA/Push فایل `sw.js` را بررسی کنید.
+- برای نسخه Android، فایل `MainActivity.kt` و assetهای مسیر `android-app/app/src/main/assets/www/` را مدیریت کنید.
 
 ---
 
@@ -111,6 +132,7 @@ npx serve .
 - افزودن تست end-to-end (مثلاً Playwright)
 - افزودن migration برای schema ذخیره‌سازی localStorage
 - افزودن conflict resolution پیشرفته‌تر برای Sync چنددستگاهی
+- اتصال به TWA یا WebViewAssetLoader برای همسانی بهتر با PWA
 
 ---
 

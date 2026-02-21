@@ -276,6 +276,8 @@
         .tool-actions { display: none; gap: 8px; overflow-x: auto; margin-bottom: 10px; }
         .tool-actions.visible { display: flex; }
         .tool-actions .quick-chip { font-size: 0.74rem; padding: 7px 10px; }
+        .tool-icon-chip { display:flex; align-items:center; gap:6px; font-size:0.74rem; }
+        .tool-icon-chip .ico { font-size:1rem; line-height:1; }
         .habit-streak-tag { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; }
 
         /* --- HABIT CARDS --- */
@@ -659,9 +661,9 @@
         </div>
         <div id="toolsPanel" style="display:none;">
         <div class="tool-actions visible" id="toolActions">
-            <button class="icon-btn" id="btnSearchToggle" title="جستجو">🔎</button>
-            <button class="icon-btn" id="btnSortCycle" title="مرتب‌سازی">↕️</button>
-            <button class="icon-btn" id="btnQuickAddPrompt" title="افزودن سریع">➕</button>
+            <button class="quick-chip tool-icon-chip" id="btnSearchToggle" title="جستجو"><span class="ico">🔎</span><span>جستجو</span></button>
+            <button class="quick-chip tool-icon-chip" id="btnSortCycle" title="مرتب‌سازی"><span class="ico">↕️</span><span>مرتب‌سازی</span></button>
+            <button class="quick-chip tool-icon-chip" id="btnQuickAddPrompt" title="افزودن سریع"><span class="ico">➕</span><span>ثبت سریع</span></button>
             <button class="quick-chip" id="btnFilterUndone">📌 انجام‌نشده</button>
             <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه</button>
             <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی</button>

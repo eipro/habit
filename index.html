@@ -172,6 +172,8 @@
             overflow: hidden;
             border: 1px solid var(--border);
         }
+        .calendar-widget.floating { display:none; position: fixed; left: 12px; right: 12px; top: 80px; z-index: 2500; margin-bottom: 0; }
+        .calendar-widget.floating.active { display:block; animation: fadeIn 0.2s; }
 
         .calendar-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -228,6 +230,9 @@
             border-radius: 50%; position: absolute; bottom: 4px;
         }
         .cal-day.selected .cal-dot { background: white; opacity: 0.9; }
+        .cal-day.holiday { border-color: rgba(239,68,68,0.35); }
+        .cal-day.holiday span { color: var(--danger); }
+        .cal-day.selected.holiday span { color: white; }
 
         .calendar-toggle {
             display: flex; justify-content: center; padding: 6px; cursor: pointer;
@@ -550,6 +555,9 @@
                     <button class="icon-btn" id="btnSettings" title="تنظیمات">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     </button>
+                    <button class="icon-btn" id="btnOpenCalendar" title="تقویم">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </button>
                     <button class="icon-btn" id="btnTheme">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                     </button>
@@ -607,12 +615,16 @@
         </div>
 
         <!-- CALENDAR WIDGET (New Design) -->
-        <div class="calendar-widget">
+        <div class="calendar-widget floating" id="calendarPanel">
             <div class="calendar-header">
                 <button class="cal-nav-btn" id="prevMonth">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
                 </button>
-                <div class="cal-title" id="calTitle">...</div>
+                <div style="text-align:center;">
+                    <div class="cal-title" id="calTitle">...</div>
+                    <div id="calHolidayText" style="font-size:0.7rem;color:var(--text-muted);"></div>
+                </div>
+                <button class="cal-nav-btn" id="btnCloseCalendar" title="بستن">✕</button>
                 <button class="cal-nav-btn" id="nextMonth">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
                 </button>
@@ -632,7 +644,37 @@
         <!-- LIST HEADER -->
         <div class="list-header">
             <span id="dateTitle">امروز</span>
-            <span id="activeCount">0 عادت</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span id="activeCount">0 عادت</span>
+                <button class="icon-btn" id="btnOpenTools" style="width:32px;height:32px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div style="margin-bottom: 8px;">
+            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
+        </div>
+        <div class="habit-tools">
+            <select id="habitSort" class="form-select">
+                <option value="default">مرتب‌سازی پیش‌فرض</option>
+                <option value="name">مرتب‌سازی بر اساس نام</option>
+                <option value="pinned">سنجاق‌شده‌ها اول</option>
+                <option value="done">انجام‌نشده‌ها اول</option>
+                <option value="streak">استریک بیشتر اول</option>
+                <option value="timer">تایمر طولانی‌تر اول</option>
+            </select>
+            <input class="form-input" id="quickAddInput" placeholder="ثبت سریع عادت... (Enter)">
+        </div>
+        <div id="toolsPanel" style="display:none;">
+        <div class="tool-actions visible" id="toolActions">
+            <button class="quick-chip" id="btnFilterUndone">📌 فقط انجام‌نشده</button>
+            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه نمایان</button>
+            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی امروز</button>
+        <button class="quick-chip" id="btnFilterTimer">⏱ فقط تایمردار</button>
+            <button class="quick-chip" id="btnFilterReminder">🔔 فقط یادآوردار</button>
+            <button class="quick-chip" id="btnResetAllFilters">🧹 پاکسازی فیلترها</button>
+            <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه روز</button>
+        </div>
         </div>
         <div style="margin-bottom: 8px;">
             <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
@@ -924,6 +966,8 @@
         const farsiDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
         const toFarsi = n => n.toString().replace(/\d/g, x => farsiDigits[x]);
         const getTodayDate = () => new Date().toISOString().split('T')[0];
+        const IRAN_EVENTS = { '1-1':'نوروز', '1-2':'نوروز', '1-3':'نوروز', '1-4':'نوروز', '1-12':'روز جمهوری اسلامی', '1-13':'روز طبیعت', '3-14':'رحلت امام خمینی', '3-15':'قیام ۱۵ خرداد', '11-22':'پیروزی انقلاب اسلامی', '12-29':'روز ملی شدن نفت' };
+        const isFriday = (isoDate) => ((new Date(isoDate).getDay()+1)%7) === 6;
 
         // --- JALALI LOGIC ---
         function toJalaali(gy, gm, gd) {
@@ -997,6 +1041,17 @@
             }
         });
 
+        function applyTheme() {
+            const auto = localStorage.getItem('theme_auto') === '1';
+            if (auto && window.matchMedia) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                return;
+            }
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
         function initApp() {
             loadLocalData();
             checkAuth();
@@ -1005,8 +1060,7 @@
             const j = toJalaali(now.getFullYear(), now.getMonth()+1, now.getDate());
             viewJYear = j.jy; viewJMonth = j.jm;
 
-            const theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
+            applyTheme();
             
             renderIcons();
             updateCategoriesUI();
@@ -1249,6 +1303,11 @@
             const dObj = new Date(gDateOfFirst.gy, gDateOfFirst.gm - 1, gDateOfFirst.gd, 12, 0, 0);
             const startDayOfWeek = (dObj.getDay() + 1) % 7;
             const monthLen = jalaaliMonthLength(viewJYear, viewJMonth);
+            const selectedParts = selectedDate.split('-').map(Number);
+            const selectedJ = toJalaali(selectedParts[0], selectedParts[1], selectedParts[2]);
+            const evKey = `${selectedJ.jm}-${selectedJ.jd}`;
+            const holidayText = IRAN_EVENTS[evKey] || (isFriday(selectedDate) ? 'جمعه (تعطیل هفتگی)' : '');
+            const holidayEl = el('calHolidayText'); if (holidayEl) holidayEl.textContent = holidayText;
             for(let i=0; i<startDayOfWeek; i++) { const cell = document.createElement('div'); cell.className = 'cal-day empty'; els.calGrid.appendChild(cell); }
             for(let d=1; d<=monthLen; d++) {
                 const g = toGregorian(viewJYear, viewJMonth, d);
@@ -1257,7 +1316,9 @@
                 const isSelected = isoDate === selectedDate;
                 const hasActivity = habits.some(h => h.completedDates?.includes(isoDate));
                 const cell = document.createElement('div');
-                cell.className = `cal-day ${isToday?'today':''} ${isSelected?'selected':''}`;
+                const jInfo = toJalaali(g.gy, g.gm, g.gd);
+                const isHoliday = !!IRAN_EVENTS[`${jInfo.jm}-${jInfo.jd}`] || isFriday(isoDate);
+                cell.className = `cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${isHoliday?'holiday':''}`;
                 cell.innerHTML = `<span>${toFarsi(d)}</span>${hasActivity ? '<div class="cal-dot"></div>' : ''}`;
                 cell.onclick = () => { selectedDate = isoDate; renderCalendar(); renderList(); };
                 els.calGrid.appendChild(cell);
@@ -1498,10 +1559,13 @@
             el('btnSaveNote').onclick = () => { const h = habits.find(x=>x.id===currentNoteId); if(!h.notes) h.notes = {}; const val = el('noteInput').value.trim(); if(val) h.notes[selectedDate] = val; else delete h.notes[selectedDate]; save(); renderList(); els.note.classList.remove('active'); };
             el('btnSettings').onclick = () => els.settings.classList.add('active'); el('btnCloseSettings').onclick = () => els.settings.classList.remove('active');
             el('btnManageCats').onclick = () => { renderCategoryManager(); els.catModal.classList.add('active'); }; el('btnCloseCatManager').onclick = () => els.catModal.classList.remove('active');
-            el('btnTheme').onclick = () => { const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
+            el('btnTheme').onclick = () => { localStorage.setItem('theme_auto','0'); const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
+            el('btnOpenCalendar').onclick = () => { el('calendarPanel').classList.add('active'); };
+            el('btnCloseCalendar').onclick = () => { el('calendarPanel').classList.remove('active'); };
+            el('btnOpenTools').onclick = () => { const p=el('toolsPanel'); p.style.display = p.style.display==='none'?'block':'none'; };
             el('btnExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({habits, userStats, categories})], {type:'application/json'})); a.download = `backup-${getTodayDate()}.json`; a.click(); };
             el('btnExportCsv').onclick = exportCsv;
-            el('btnAutoTheme').onclick = () => { const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const next = prefersDark ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); showToast('تم خودکار اعمال شد'); };
+            el('btnAutoTheme').onclick = () => { const current = localStorage.getItem('theme_auto') === '1'; localStorage.setItem('theme_auto', current ? '0' : '1'); applyTheme(); showToast(current ? 'تم خودکار خاموش شد' : 'تم خودکار فعال شد'); };
             el('btnImport').onclick = () => el('fileImport').click();
             el('fileImport').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if(d.habits) { habits=d.habits; userStats=d.userStats||userStats; categories=(d.categories||categories).map((c, i) => ({ ...c, icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length] })); save(); updateCategoriesUI(); renderList(); renderCalendar(); updateStats(); updateReminderSummary(); alert('بازیابی شد'); } } catch { alert('فایل نامعتبر'); } }; if(e.target.files[0]) r.readAsText(e.target.files[0]); };
             el('btnReset').onclick = () => { showConfirm('حذف کل اطلاعات؟', () => { habits = []; userStats = { xp: 0, level: 1 }; save(); updateStats(); renderList(); renderCalendar(); els.settings.classList.remove('active'); }, 'هشدار', true); };
@@ -1518,8 +1582,7 @@
             el('btnFilterUndone').onclick = () => { filterUndoneOnly = !filterUndoneOnly; el('btnFilterUndone').classList.toggle('active', filterUndoneOnly); renderList(); };
             el('btnCompleteVisible').onclick = completeVisibleHabits;
             el('btnResetVisible').onclick = resetVisibleHabits;
-            el('btnToggleTools').onclick = () => el('toolActions').classList.toggle('visible');
-            el('btnFilterTimer').onclick = () => { filterTimerOnly = !filterTimerOnly; el('btnFilterTimer').classList.toggle('active', filterTimerOnly); renderList(); };
+                        el('btnFilterTimer').onclick = () => { filterTimerOnly = !filterTimerOnly; el('btnFilterTimer').classList.toggle('active', filterTimerOnly); renderList(); };
             el('btnFilterReminder').onclick = () => { filterReminderOnly = !filterReminderOnly; el('btnFilterReminder').classList.toggle('active', filterReminderOnly); renderList(); };
             el('btnResetAllFilters').onclick = () => { filterUndoneOnly = false; filterTimerOnly = false; filterReminderOnly = false; habitSearchQuery=''; activeFilter='all'; habitSortMode='default'; el('habitSearchInput').value=''; el('habitSort').value='default'; el('btnFilterUndone').classList.remove('active'); el('btnFilterTimer').classList.remove('active'); el('btnFilterReminder').classList.remove('active'); updateCategoriesUI(); renderList(); };
             el('btnCopyTodaySummary').onclick = async () => { const txt=`خلاصه امروز: ${el('headerCompletedCount').textContent} از ${el('headerHabitCount').textContent} (${el('headerCompletionRate').textContent})`; try { await navigator.clipboard.writeText(txt); showToast('خلاصه کپی شد'); } catch { showToast('امکان کپی نیست', 'error'); } };
@@ -1548,12 +1611,13 @@
                 const name = el('habitName').value; const freq = el('habitFrequency').value; const cat = el('habitCategory').value;
                 const hasTimer = el('habitTimer').checked; const timerDur = parseInt(el('timerDuration').value) || 25;
                 const hasReminder = el('habitReminder').checked; const reminderTime = el('reminderTime').value || '20:00';
-                const icon = document.querySelector('.icon-opt.selected').dataset.icon; const color = document.querySelector('.color-opt.selected').dataset.color;
+                const icon = document.querySelector('.icon-opt.selected').dataset.icon; const color = (document.querySelector('.color-opt.selected') || document.querySelector('.color-opt')).dataset.color;
                 let customDays = []; if(freq==='custom') document.querySelectorAll('.day-checkbox:checked').forEach(cb=>customDays.push(parseInt(cb.value)));
                 if(editId) { const h = habits.find(x=>x.id===editId); Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, pinned: !!h.pinned}); }
                 else { habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, pinned:false, completedDates:[], notes:{} }); }
                 save(); updateReminderSummary(); els.modal.classList.remove('active'); renderList(); renderCalendar();
             };
+            if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if(localStorage.getItem('theme_auto')==='1') applyTheme(); });
             window.deleteCategory = function(id) { if (DEFAULT_CATEGORIES.some(c => c.id === id)) return showToast('دسته پیش‌فرض قابل حذف نیست', 'error'); if (categories.length <= DEFAULT_CATEGORIES.length) return showToast('حداقل دسته‌های پیش‌فرض باید بمانند', 'error'); const linkedHabits = habits.filter(h => h.category === id).length; if (linkedHabits > 0 && !confirm(`این دسته ${toFarsi(linkedHabits)} عادت دارد. حذف شود؟`)) return; categories = normalizeCategories(categories.filter(c => c.id !== id)); const fallbackCategory = categories[0]?.id || DEFAULT_CATEGORIES[0].id; habits.forEach(h => { if (h.category === id) h.category = fallbackCategory; }); save(); renderCategoryManager(); updateCategoriesUI(); renderList(); showToast('دسته حذف شد'); };
         }
     </script>

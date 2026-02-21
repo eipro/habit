@@ -392,19 +392,30 @@
         .empty-state .emoji { font-size: 2.5rem; margin-bottom: 10px; }
 
         /* Category Manager */
-        .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .cat-tools { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 14px; }
+        .cat-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+        .cat-stat-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center; }
+        .cat-stat-value { font-weight: 800; font-size: 1rem; }
+        .cat-stat-label { color: var(--text-muted); font-size: 0.75rem; }
+        .cat-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; max-height: 280px; overflow: auto; padding-left: 4px; }
         .cat-item { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 14px; background: var(--bg-input); border-radius: 12px;
+            padding: 12px; background: var(--bg-input); border-radius: 12px; border: 1px solid var(--border);
         }
-        .cat-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
+        .cat-item-main { display: flex; flex-direction: column; gap: 8px; width: calc(100% - 92px); }
+        .cat-info { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 0.9rem; }
+        .cat-usage { color: var(--text-muted); font-size: 0.75rem; font-weight: 500; }
         .cat-color-circle { width: 14px; height: 14px; border-radius: 50%; }
-        .btn-delete-cat { 
-            color: var(--danger); background: rgba(239, 68, 68, 0.1); border: none; 
-            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        .cat-edit-row { display: flex; gap: 8px; }
+        .cat-edit-input { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-main); width: 100%; }
+        .cat-actions { display: flex; gap: 6px; }
+        .btn-delete-cat, .btn-save-cat { 
+            border: none; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .btn-delete-cat svg { width: 16px; height: 16px; stroke-width: 2; }
-        .add-cat-form { display: flex; gap: 10px; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .btn-save-cat { color: var(--success); background: rgba(16, 185, 129, 0.15); }
+        .btn-delete-cat { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-delete-cat svg, .btn-save-cat svg { width: 17px; height: 17px; stroke-width: 2.2; }
+        .add-cat-form { display: flex; gap: 10px; align-items: center; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
         .color-picker-wrapper { position: relative; width: 44px; height: 44px; overflow: hidden; border-radius: 12px; border: 2px solid var(--border); flex-shrink: 0; }
         .color-picker-input { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; padding: 0; margin: 0; }
 
@@ -553,6 +564,10 @@
                     <div class="summary-label">درصد انجام</div>
                     <div class="summary-value" id="headerCompletionRate">۰٪</div>
                 </div>
+                <div class="summary-card">
+                    <div class="summary-label">رکورد متوالی</div>
+                    <div class="summary-value" id="headerStreak">۰ روز</div>
+                </div>
             </div>
         </header>
 
@@ -588,6 +603,9 @@
         <div class="list-header">
             <span id="dateTitle">امروز</span>
             <span id="activeCount">0 عادت</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها...">
         </div>
 
         <!-- LIST -->
@@ -661,6 +679,16 @@
                         <input type="number" id="timerDuration" class="form-input" value="25" min="1" max="180">
                     </div>
                 </div>
+                <div class="form-group" style="background: var(--bg-input); padding: 12px; border-radius: 12px;">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 0;">
+                        <input type="checkbox" id="habitReminder" style="width: 20px; height: 20px;">
+                        <span style="font-weight: 600;">یادآور روزانه</span>
+                    </label>
+                    <div id="reminderSettings" style="display: none; margin-top: 12px;">
+                        <label class="form-label">ساعت یادآور:</label>
+                        <input type="time" id="reminderTime" class="form-input" value="20:00">
+                    </div>
+                </div>
                 <div class="btn-row">
                     <button type="button" class="form-input btn-soft" id="btnCloseModal">لغو</button>
                     <button type="submit" class="form-input btn-primary">ذخیره</button>
@@ -706,6 +734,8 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 فعال‌سازی نوتیفیکیشن
             </button>
+            <button class="form-input settings-btn" id="btnScheduleReminders">⏰ زمان‌بندی یادآورهای امروز</button>
+            <small id="reminderSummary" style="display:block; color:var(--text-muted); margin-top:-4px;">یادآوری فعال نشده است.</small>
 
             <button class="form-input settings-btn" id="btnManageCats">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -725,11 +755,20 @@
     <div class="modal" id="categoryModal">
         <div class="modal-content">
             <h3 class="modal-title">مدیریت دسته‌بندی‌ها</h3>
+            <div class="cat-stats">
+                <div class="cat-stat-card"><div class="cat-stat-value" id="catCountValue">۰</div><div class="cat-stat-label">تعداد دسته‌ها</div></div>
+                <div class="cat-stat-card"><div class="cat-stat-value" id="catMostUsedValue">-</div><div class="cat-stat-label">پراستفاده‌ترین</div></div>
+            </div>
+            <div class="cat-tools">
+                <input type="text" id="catSearchInput" class="form-input" placeholder="جستجوی دسته‌بندی...">
+                <button class="form-input btn-soft" id="btnResetCatFilter" style="width:auto; padding: 0 14px;">پاکسازی</button>
+            </div>
             <div class="cat-list" id="categoryList">
                 <!-- Injected via JS -->
             </div>
             <div class="add-cat-form">
                 <input type="text" id="newCatName" class="form-input" placeholder="نام دسته جدید">
+                <select id="newCatIcon" class="form-select" style="max-width:88px; padding: 8px;"></select>
                 <div class="color-picker-wrapper">
                     <input type="color" id="newCatColor" class="color-picker-input" value="#4f46e5">
                 </div>
@@ -817,6 +856,10 @@
             pen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>`
         };
 
+
+        const CATEGORY_ICONS = ['🏃','📚','💼','🧘','💧','🍎','🎯','💡','💻','🎵','💤','🧹'];
+        const getCategoryIcon = cat => cat?.icon || '🏷️';
+
         const farsiDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
         const toFarsi = n => n.toString().replace(/\d/g, x => farsiDigits[x]);
         const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -861,7 +904,7 @@
         // --- STATE ---
         let habits = [], userStats = { xp: 0, level: 1 }, categories = [];
         let authState = { token: null, user: 'guest' };
-        let editId = null, selectedDate = getTodayDate(), activeFilter = 'all';
+        let editId = null, selectedDate = getTodayDate(), activeFilter = 'all', habitSearchQuery = '';
         let timerInterval = null, timeLeft = 0, isTimerRunning = false, activeTimerHabitId = null;
         let currentNoteId = null;
         let isCalExpanded = false;
@@ -908,6 +951,7 @@
             renderCalendar();
             renderList();
             updateStats();
+            updateReminderSummary();
             setupEvents();
         }
 
@@ -916,12 +960,13 @@
                 habits = JSON.parse(localStorage.getItem('habits_ultimate')) || [];
                 userStats = JSON.parse(localStorage.getItem('user_stats_ultimate')) || { xp: 0, level: 1 };
                 categories = JSON.parse(localStorage.getItem('habit_categories')) || [
-                    {id: 'health', name: 'سلامتی', color: '#10b981'},
-                    {id: 'learn', name: 'یادگیری', color: '#4f46e5'},
-                    {id: 'work', name: 'کار', color: '#f59e0b'}
+                    {id: 'health', name: 'سلامتی', color: '#10b981', icon:'🏃'},
+                    {id: 'learn', name: 'یادگیری', color: '#4f46e5', icon:'📚'},
+                    {id: 'work', name: 'کار', color: '#f59e0b', icon:'💼'}
                 ];
                 const t = localStorage.getItem('auth_token');
                 const u = localStorage.getItem('auth_user');
+                categories = categories.map((c, i) => ({ ...c, icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length] }));
                 if(t && u) authState = { token: t, user: u };
             } catch(e) { console.error('Load Error', e); }
         }
@@ -983,37 +1028,48 @@
 
         async function subscribeToPush() {
             if (!authState.token) return showToast("ابتدا وارد حساب شوید", "error");
-            if (!('serviceWorker' in navigator)) return;
+            if (!('serviceWorker' in navigator) || !('Notification' in window)) return showToast('مرورگر از نوتیفیکیشن پشتیبانی نمی‌کند', 'error');
             
             const btn = el('btnReqNotify');
+            const oldText = btn.textContent;
             btn.textContent = 'در حال فعال‌سازی...';
-            
+
             try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') throw new Error('NOTIFICATION_DENIED');
+
                 const reg = await navigator.serviceWorker.ready;
-                // VAPID Convert
-                const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-                const sub = await reg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: applicationServerKey
-                });
+                const existingSub = await reg.pushManager.getSubscription();
+                let sub = existingSub;
+
+                if (!sub) {
+                    const hasValidVapid = VAPID_PUBLIC_KEY && !VAPID_PUBLIC_KEY.includes('a58a58a58');
+                    if (hasValidVapid) {
+                        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey });
+                    }
+                }
                 
-                // Send to server
-                const baseUrl = CLOUDFLARE_WORKER_URL.replace(/\/$/, '');
-                await fetch(`${baseUrl}/subscribe`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authState.token}`
-                    },
-                    body: JSON.stringify(sub)
-                });
-                
-                showToast("نوتیفیکیشن فعال شد! 🎉");
+                if (sub) {
+                    const baseUrl = CLOUDFLARE_WORKER_URL.replace(/\/$/, '');
+                    const res = await fetch(`${baseUrl}/subscribe`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authState.token}`
+                        },
+                        body: JSON.stringify(sub)
+                    });
+                    if (!res.ok) throw new Error('SUBSCRIBE_API_ERROR');
+                }
+
                 btn.textContent = '✅ نوتیفیکیشن فعال است';
+                showToast('نوتیفیکیشن با موفقیت فعال شد');
             } catch (err) {
                 console.error(err);
-                showToast("خطا در فعال‌سازی نوتیفیکیشن", "error");
-                btn.textContent = '🔔 فعال‌سازی نوتیفیکیشن';
+                btn.textContent = oldText;
+                if (err.message === 'NOTIFICATION_DENIED') showToast('دسترسی نوتیفیکیشن رد شد', 'error');
+                else showToast('فعالسازی انجام نشد. دوباره تلاش کنید.', 'error');
             }
         }
 
@@ -1080,13 +1136,15 @@
             filterContainer.appendChild(allBtn);
             categories.forEach(cat => {
                 const btn = document.createElement('button'); btn.className = `cat-btn ${activeFilter===cat.id?'active':''}`;
-                btn.innerHTML = `<div class="cat-dot" style="color:${cat.color}"></div>${cat.name}`;
+                btn.innerHTML = `<div class="cat-dot" style="color:${cat.color}"></div><span>${getCategoryIcon(cat)}</span>${cat.name}`;
                 btn.onclick = () => { activeFilter = cat.id; updateCategoriesUI(); renderList(); };
                 filterContainer.appendChild(btn);
             });
             const select = el('habitCategory');
-            select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            select.innerHTML = categories.map(c => `<option value="${c.id}">${getCategoryIcon(c)} ${c.name}</option>`).join('');
             if(categories.length === 0) select.innerHTML = `<option value="other">سایر</option>`;
+            const iconSelect = el('newCatIcon');
+            if (iconSelect && !iconSelect.options.length) iconSelect.innerHTML = CATEGORY_ICONS.map(i => `<option value="${i}">${i}</option>`).join('');
         }
         function renderCalendar() {
             const months = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
@@ -1122,6 +1180,7 @@
             const pDayIndex = (dObj.getDay() + 1) % 7; 
             const activeHabits = habits.filter(h => {
                 if(activeFilter !== 'all' && h.category !== activeFilter) return false;
+                if(habitSearchQuery && !h.name.toLowerCase().includes(habitSearchQuery)) return false;
                 if(h.frequency === 'daily') return true;
                 if(h.frequency === 'weekly') return pDayIndex === 6;
                 if(h.frequency === 'custom' && h.customDays) return h.customDays.includes(pDayIndex);
@@ -1132,17 +1191,31 @@
             const headerHabitCountEl = el('headerHabitCount');
             const headerCompletedCountEl = el('headerCompletedCount');
             const headerCompletionRateEl = el('headerCompletionRate');
+            const headerStreakEl = el('headerStreak');
             const completionRate = activeHabits.length ? Math.round((completedCount / activeHabits.length) * 100) : 0;
             if (headerHabitCountEl) headerHabitCountEl.textContent = toFarsi(activeHabits.length);
             if (headerCompletedCountEl) headerCompletedCountEl.textContent = toFarsi(completedCount);
             if (headerCompletionRateEl) headerCompletionRateEl.textContent = `${toFarsi(completionRate)}٪`;
+            if (headerStreakEl) {
+                const completedDays = new Set();
+                habits.forEach(h => (h.completedDates || []).forEach(d => completedDays.add(d)));
+                let streak = 0;
+                const cursor = new Date();
+                while (true) {
+                    const ds = cursor.toISOString().split('T')[0];
+                    if (!completedDays.has(ds)) break;
+                    streak++;
+                    cursor.setDate(cursor.getDate() - 1);
+                }
+                headerStreakEl.textContent = `${toFarsi(streak)} روز`;
+            }
             if(activeHabits.length === 0) {
                 els.list.innerHTML = `<div class="empty-state"><div class="emoji">☕</div><p>برای این روز هنوز عادتی تنظیم نشده.</p></div>`; return;
             }
             activeHabits.forEach(h => {
                 const isDone = h.completedDates && h.completedDates.includes(selectedDate);
                 const category = categories.find(c => c.id === h.category);
-                const catName = category ? category.name : 'سایر';
+                const catName = category ? `${getCategoryIcon(category)} ${category.name}` : '🏷️ سایر';
                 const card = document.createElement('div'); card.className = 'habit-card';
                 let mainBtn = '';
                 if(h.hasTimer && !isDone) mainBtn = `<button class="check-btn play-btn" onclick="startTimer('${h.id}')"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>`;
@@ -1182,13 +1255,70 @@
             el('xpText').textContent = `${toFarsi(cur)} XP`;
             el('xpFill').style.width = `${cur}%`;
         }
-        function editHabit(id) { editId=id; const h=habits.find(x=>x.id===id); el('habitName').value=h.name; el('habitFrequency').value=h.frequency; el('habitCategory').value=h.category||'other'; el('habitTimer').checked=h.hasTimer; el('timerDuration').value=h.timerDuration||25; el('customDaysGroup').style.display=h.frequency==='custom'?'block':'none'; el('timerSettings').style.display=h.hasTimer?'block':'none'; document.querySelectorAll('.day-checkbox').forEach(cb=>cb.checked=h.customDays?.includes(parseInt(cb.value))); document.querySelectorAll('.icon-opt').forEach(i => { i.classList.remove('selected'); if(i.dataset.icon === (h.icon || 'target')) i.classList.add('selected'); }); document.querySelectorAll('.color-opt').forEach(c=>c.classList.toggle('selected', c.dataset.color===h.color)); els.modal.classList.add('active'); }
-        function deleteHabit(id) { showConfirm('این عادت حذف شود؟', () => { habits = habits.filter(x => x.id !== id); save(); renderList(); renderCalendar(); showToast('حذف شد', 'error'); }, 'حذف', true); }
+        function editHabit(id) { editId=id; const h=habits.find(x=>x.id===id); el('habitName').value=h.name; el('habitFrequency').value=h.frequency; el('habitCategory').value=h.category||'other'; el('habitTimer').checked=h.hasTimer; el('timerDuration').value=h.timerDuration||25; el('habitReminder').checked=!!h.hasReminder; el('reminderTime').value=h.reminderTime||'20:00'; el('customDaysGroup').style.display=h.frequency==='custom'?'block':'none'; el('timerSettings').style.display=h.hasTimer?'block':'none'; el('reminderSettings').style.display=h.hasReminder?'block':'none'; document.querySelectorAll('.day-checkbox').forEach(cb=>cb.checked=h.customDays?.includes(parseInt(cb.value))); document.querySelectorAll('.icon-opt').forEach(i => { i.classList.remove('selected'); if(i.dataset.icon === (h.icon || 'target')) i.classList.add('selected'); }); document.querySelectorAll('.color-opt').forEach(c=>c.classList.toggle('selected', c.dataset.color===h.color)); els.modal.classList.add('active'); }
+        function deleteHabit(id) { showConfirm('این عادت حذف شود؟', () => { habits = habits.filter(x => x.id !== id); save(); renderList(); renderCalendar(); updateReminderSummary(); showToast('حذف شد', 'error'); }, 'حذف', true); }
         function openNote(id) { currentNoteId = id; const h = habits.find(x => x.id === id); el('noteDateDisplay').textContent = h.name; el('noteInput').value = (h.notes && h.notes[selectedDate]) || ''; els.note.classList.add('active'); }
         function showAnalytics() { els.analytics.classList.add('active'); const grid = el('heatmapGrid'); grid.innerHTML = ''; for(let i=100; i>=0; i--) { const d = new Date(); d.setDate(new Date().getDate() - i); const ds = d.toISOString().split('T')[0]; let count = 0; habits.forEach(h => { if(h.completedDates?.includes(ds)) count++; }); const cell = document.createElement('div'); cell.className = 'heatmap-cell'; if(count>0) cell.style.background = `rgba(79, 70, 229, ${Math.min(1, count*0.4)})`; grid.appendChild(cell); } let total=0, done=0; habits.forEach(h => { for(let i=0; i<7; i++) { const d = new Date(); d.setDate(new Date().getDate()-i); total++; if(h.completedDates?.includes(d.toISOString().split('T')[0])) done++; } }); const rate = total===0?0:Math.round((done/total)*100); el('successRateText').textContent = `${toFarsi(rate)}%`; el('successRateBar').style.width = `${rate}%`; }
         function showConfirm(m, a, t, isD) { el('confirmTitle').textContent = t; el('confirmMessage').textContent = m; el('btnConfirmYes').style.background = isD ? 'var(--danger)' : 'var(--primary)'; pendingConfirmAction = a; els.confirmModal.classList.add('active'); }
         function showToast(m, type='success') { els.toast.innerHTML = m; els.toast.style.borderLeft = `4px solid ${type==='error'?'var(--danger)':'var(--success)'}`; els.toast.classList.add('show'); setTimeout(()=>els.toast.classList.remove('show'),3000); }
-        function renderCategoryManager() { els.catList.innerHTML = ''; categories.forEach(cat => { const item = document.createElement('div'); item.className = 'cat-item'; item.innerHTML = `<div class="cat-info"><div class="cat-color-circle" style="background:${cat.color}"></div><span>${cat.name}</span></div><button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`; els.catList.appendChild(item); }); }
+        function renderCategoryManager() {
+            const q = (el('catSearchInput')?.value || '').trim().toLowerCase();
+            const catUsage = id => habits.filter(h => h.category === id).length;
+            const visibleCategories = categories.filter(c => c.name.toLowerCase().includes(q));
+
+            el('catCountValue').textContent = toFarsi(categories.length);
+            const mostUsed = categories.slice().sort((a,b) => catUsage(b.id) - catUsage(a.id))[0];
+            el('catMostUsedValue').textContent = mostUsed ? `${mostUsed.name} (${toFarsi(catUsage(mostUsed.id))})` : '-';
+
+            els.catList.innerHTML = '';
+            if (visibleCategories.length === 0) {
+                els.catList.innerHTML = `<div class="empty-state" style="padding:18px;"><p>دسته‌ای با این نام پیدا نشد.</p></div>`;
+                return;
+            }
+            visibleCategories.forEach(cat => {
+                const usage = catUsage(cat.id);
+                const item = document.createElement('div');
+                item.className = 'cat-item';
+                item.innerHTML = `
+                    <div class="cat-item-main">
+                        <div class="cat-info"><div class="cat-color-circle" style="background:${cat.color}"></div><span>${getCategoryIcon(cat)} ${cat.name}</span></div>
+                        <div class="cat-usage">${toFarsi(usage)} عادت در این دسته</div>
+                        <div class="cat-edit-row">
+                            <input class="cat-edit-input" value="${cat.name}" data-role="name" />
+                            <select class="cat-edit-input" data-role="icon" style="width:62px; padding:4px;">${CATEGORY_ICONS.map(ic => `<option value="${ic}" ${ic===getCategoryIcon(cat)?"selected":""}>${ic}</option>`).join('')}</select>
+                            <input type="color" class="cat-edit-input" value="${cat.color}" data-role="color" style="width:52px; padding:2px;" />
+                        </div>
+                    </div>
+                    <div class="cat-actions">
+                        <button class="btn-save-cat" title="ذخیره" data-save-id="${cat.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                        <button class="btn-delete-cat" title="حذف" data-delete-id="${cat.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>`;
+                els.catList.appendChild(item);
+            });
+        }
+        function updateReminderSummary() {
+            const total = habits.filter(h => h.hasReminder && h.reminderTime).length;
+            el('reminderSummary').textContent = total ? `${toFarsi(total)} یادآور فعال تعریف شده است.` : 'یادآوری فعال نشده است.';
+        }
+        function scheduleTodaysReminders() {
+            if (!('Notification' in window)) return showToast('مرورگر از اعلان پشتیبانی نمی‌کند', 'error');
+            if (Notification.permission !== 'granted') return showToast('ابتدا اعلان را فعال کنید', 'error');
+            const now = new Date();
+            let count = 0;
+            habits.forEach(h => {
+                if (!h.hasReminder || !h.reminderTime) return;
+                const [hour, minute] = h.reminderTime.split(':').map(Number);
+                const reminderDate = new Date();
+                reminderDate.setHours(hour, minute, 0, 0);
+                const delay = reminderDate.getTime() - now.getTime();
+                if (delay <= 0) return;
+                count++;
+                setTimeout(() => {
+                    new Notification(`یادآور عادت: ${h.name}`, { body: `زمان انجام «${h.name}» رسید 💪` });
+                }, delay);
+            });
+            showToast(count ? `${toFarsi(count)} یادآور برای امروز زمان‌بندی شد` : 'برای امروز یادآور آینده‌ای پیدا نشد', count ? 'success' : 'error');
+        }
         
         // --- EVENT BINDING ---
         function setupEvents() {
@@ -1201,10 +1331,11 @@
             el('calToggle').onclick = () => { isCalExpanded = !isCalExpanded; els.calWrapper.className = `calendar-grid-wrapper ${isCalExpanded?'':'collapsed'}`; els.calToggle.className = `calendar-toggle ${isCalExpanded?'':'collapsed'}`; };
             el('prevMonth').onclick = () => { viewJMonth--; if(viewJMonth < 1) { viewJMonth = 12; viewJYear--; } renderCalendar(); };
             el('nextMonth').onclick = () => { viewJMonth++; if(viewJMonth > 12) { viewJMonth = 1; viewJYear++; } renderCalendar(); };
-            el('btnAddHabit').onclick = () => { editId=null; els.form.reset(); el('customDaysGroup').style.display='none'; el('timerSettings').style.display='none'; els.modal.classList.add('active'); };
+            el('btnAddHabit').onclick = () => { editId=null; els.form.reset(); el('customDaysGroup').style.display='none'; el('timerSettings').style.display='none'; el('reminderSettings').style.display='none'; els.modal.classList.add('active'); };
             el('btnCloseModal').onclick = () => els.modal.classList.remove('active');
             el('habitFrequency').onchange = (e) => el('customDaysGroup').style.display = e.target.value==='custom'?'block':'none';
             el('habitTimer').onchange = (e) => el('timerSettings').style.display = e.target.checked?'block':'none';
+            el('habitReminder').onchange = (e) => el('reminderSettings').style.display = e.target.checked?'block':'none';
             el('btnToggleTimer').onclick = () => toggleTimer();
             el('btnStopTimer').onclick = () => showConfirm('توقف تایمر؟', stopTimerLogic, 'هشدار', true);
             el('btnExitTimer').onclick = () => showConfirm('خروج؟', stopTimerLogic, 'هشدار', true);
@@ -1218,24 +1349,43 @@
             el('btnTheme').onclick = () => { const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
             el('btnExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({habits, userStats, categories})], {type:'application/json'})); a.download = `backup-${getTodayDate()}.json`; a.click(); };
             el('btnImport').onclick = () => el('fileImport').click();
-            el('fileImport').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if(d.habits) { habits=d.habits; userStats=d.userStats||userStats; categories=d.categories||categories; save(); updateCategoriesUI(); renderList(); renderCalendar(); updateStats(); alert('بازیابی شد'); } } catch { alert('فایل نامعتبر'); } }; if(e.target.files[0]) r.readAsText(e.target.files[0]); };
+            el('fileImport').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if(d.habits) { habits=d.habits; userStats=d.userStats||userStats; categories=(d.categories||categories).map((c, i) => ({ ...c, icon: c.icon || CATEGORY_ICONS[i % CATEGORY_ICONS.length] })); save(); updateCategoriesUI(); renderList(); renderCalendar(); updateStats(); updateReminderSummary(); alert('بازیابی شد'); } } catch { alert('فایل نامعتبر'); } }; if(e.target.files[0]) r.readAsText(e.target.files[0]); };
             el('btnReset').onclick = () => { showConfirm('حذف کل اطلاعات؟', () => { habits = []; userStats = { xp: 0, level: 1 }; save(); updateStats(); renderList(); renderCalendar(); els.settings.classList.remove('active'); }, 'هشدار', true); };
             el('btnConfirmYes').onclick = () => { if(pendingConfirmAction) pendingConfirmAction(); els.confirmModal.classList.remove('active'); pendingConfirmAction = null; };
             el('btnConfirmNo').onclick = () => { els.confirmModal.classList.remove('active'); pendingConfirmAction = null; };
-            el('btnAddCategory').onclick = () => { const name = el('newCatName').value.trim(); const color = el('newCatColor').value; if(!name) return; categories.push({ id: 'cat_' + Date.now(), name, color }); el('newCatName').value = ''; updateCategoriesUI(); renderCategoryManager(); save(); };
+            el('btnAddCategory').onclick = () => { const name = el('newCatName').value.trim(); const color = el('newCatColor').value; const icon = el('newCatIcon').value || '🏷️'; if(!name) return showToast('نام دسته را وارد کنید', 'error'); if(categories.some(c => c.name === name)) return showToast('این دسته قبلا اضافه شده', 'error'); categories.push({ id: 'cat_' + Date.now(), name, color, icon }); el('newCatName').value = ''; updateCategoriesUI(); renderCategoryManager(); save(); };
             el('btnReqNotify').onclick = subscribeToPush;
+            el('btnScheduleReminders').onclick = scheduleTodaysReminders;
+            el('catSearchInput').oninput = renderCategoryManager;
+            el('btnResetCatFilter').onclick = () => { el('catSearchInput').value = ''; renderCategoryManager(); };
+            el('habitSearchInput').oninput = (e) => { habitSearchQuery = e.target.value.trim().toLowerCase(); renderList(); };
+            els.catList.onclick = (e) => {
+                const saveId = e.target.closest('[data-save-id]')?.dataset.saveId;
+                const deleteId = e.target.closest('[data-delete-id]')?.dataset.deleteId;
+                if (saveId) {
+                    const item = e.target.closest('.cat-item');
+                    const name = item.querySelector('[data-role="name"]').value.trim();
+                    const color = item.querySelector('[data-role="color"]').value;
+                    const icon = item.querySelector('[data-role="icon"]').value;
+                    if (!name) return showToast('نام دسته نمی‌تواند خالی باشد', 'error');
+                    const cat = categories.find(c => c.id === saveId);
+                    if (cat) { cat.name = name; cat.color = color; cat.icon = icon; save(); updateCategoriesUI(); renderCategoryManager(); renderList(); showToast('دسته بروزرسانی شد'); }
+                }
+                if (deleteId) window.deleteCategory(deleteId);
+            };
             // Handle form submit
             els.form.onsubmit = (e) => {
                 e.preventDefault();
                 const name = el('habitName').value; const freq = el('habitFrequency').value; const cat = el('habitCategory').value;
                 const hasTimer = el('habitTimer').checked; const timerDur = parseInt(el('timerDuration').value) || 25;
+                const hasReminder = el('habitReminder').checked; const reminderTime = el('reminderTime').value || '20:00';
                 const icon = document.querySelector('.icon-opt.selected').dataset.icon; const color = document.querySelector('.color-opt.selected').dataset.color;
                 let customDays = []; if(freq==='custom') document.querySelectorAll('.day-checkbox:checked').forEach(cb=>customDays.push(parseInt(cb.value)));
-                if(editId) { const h = habits.find(x=>x.id===editId); Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur}); }
-                else { habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, completedDates:[], notes:{} }); }
-                save(); els.modal.classList.remove('active'); renderList(); renderCalendar();
+                if(editId) { const h = habits.find(x=>x.id===editId); Object.assign(h, {name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime}); }
+                else { habits.push({ id:Date.now().toString(), name, frequency:freq, category:cat, customDays, icon, color, hasTimer, timerDuration:timerDur, hasReminder, reminderTime, completedDates:[], notes:{} }); }
+                save(); updateReminderSummary(); els.modal.classList.remove('active'); renderList(); renderCalendar();
             };
-            window.deleteCategory = function(id) { categories = categories.filter(c => c.id !== id); habits.forEach(h => { if (h.category === id) h.category = 'other'; }); save(); renderCategoryManager(); updateCategoriesUI(); renderList(); };
+            window.deleteCategory = function(id) { const linkedHabits = habits.filter(h => h.category === id).length; if (linkedHabits > 0 && !confirm(`این دسته ${toFarsi(linkedHabits)} عادت دارد. حذف شود؟`)) return; categories = categories.filter(c => c.id !== id); habits.forEach(h => { if (h.category === id) h.category = 'other'; }); save(); renderCategoryManager(); updateCategoriesUI(); renderList(); showToast('دسته حذف شد'); };
         }
     </script>
 </body>

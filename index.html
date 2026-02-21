@@ -986,6 +986,7 @@
         let habitSortMode = 'default', filterUndoneOnly = false, filterTimerOnly = false, filterReminderOnly = false;
         let timerInterval = null, timeLeft = 0, isTimerRunning = false, activeTimerHabitId = null;
         let lastLocalMutation = Number(localStorage.getItem('last_local_mutation_ts') || '0');
+        let lastSyncedMutation = Number(localStorage.getItem('last_synced_mutation_ts') || '0');
         let currentNoteId = null;
         let isCalExpanded = false;
         let viewJYear, viewJMonth;
@@ -1220,6 +1221,8 @@
                         method: 'POST', headers,
                         body: JSON.stringify({ habits, userStats, categories, timestamp: payloadTimestamp })
                     });
+                    lastSyncedMutation = payloadTimestamp;
+                    localStorage.setItem('last_synced_mutation_ts', String(lastSyncedMutation));
                     el('syncBadge').style.display = 'none';
                     showToast('همگام‌سازی شد');
                 } else {
@@ -1230,9 +1233,20 @@
                             const remoteTimestamp = Number(data.timestamp || 0);
                             const localHasData = habits.length > 0;
                             const remoteIsEmpty = data.habits.length === 0;
+                            const hasUnsyncedLocalChanges = lastLocalMutation > lastSyncedMutation;
+                            const remoteHasNoTimestamp = remoteTimestamp === 0;
                             const isRemoteOlder = remoteTimestamp > 0 && remoteTimestamp < lastLocalMutation;
-                            if ((localHasData && remoteIsEmpty) || isRemoteOlder) return;
+                            if (hasUnsyncedLocalChanges && (remoteIsEmpty || remoteHasNoTimestamp || isRemoteOlder)) return;
                             habits = data.habits; userStats = data.userStats; categories = normalizeCategories(data.categories || categories);
+                            if (remoteTimestamp > 0) {
+                                lastLocalMutation = remoteTimestamp;
+                                lastSyncedMutation = remoteTimestamp;
+                                localStorage.setItem('last_local_mutation_ts', String(lastLocalMutation));
+                                localStorage.setItem('last_synced_mutation_ts', String(lastSyncedMutation));
+                            } else if (!localHasData || !hasUnsyncedLocalChanges) {
+                                lastSyncedMutation = Math.max(lastSyncedMutation, lastLocalMutation);
+                                localStorage.setItem('last_synced_mutation_ts', String(lastSyncedMutation));
+                            }
                             save(false); renderList(); renderCalendar(); updateStats();
                         }
                     }

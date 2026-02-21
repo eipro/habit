@@ -985,6 +985,7 @@
         let editId = null, selectedDate = getTodayDate(), activeFilter = 'all', habitSearchQuery = '';
         let habitSortMode = 'default', filterUndoneOnly = false, filterTimerOnly = false, filterReminderOnly = false;
         let timerInterval = null, timeLeft = 0, isTimerRunning = false, activeTimerHabitId = null;
+        let lastLocalMutation = Number(localStorage.getItem('last_local_mutation_ts') || '0');
         let currentNoteId = null;
         let isCalExpanded = false;
         let viewJYear, viewJMonth;
@@ -1214,9 +1215,10 @@
                 const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authState.token}` };
                 
                 if (direction === 'push') {
+                    const payloadTimestamp = lastLocalMutation || Date.now();
                     await fetch(`${baseUrl}/data`, {
                         method: 'POST', headers,
-                        body: JSON.stringify({ habits, userStats, categories, timestamp: Date.now() })
+                        body: JSON.stringify({ habits, userStats, categories, timestamp: payloadTimestamp })
                     });
                     el('syncBadge').style.display = 'none';
                     showToast('همگام‌سازی شد');
@@ -1224,7 +1226,12 @@
                     const res = await fetch(`${baseUrl}/data`, { headers });
                     if(res.ok) {
                         const data = await res.json();
-                        if (data && data.habits) {
+                        if (data && Array.isArray(data.habits)) {
+                            const remoteTimestamp = Number(data.timestamp || 0);
+                            const localHasData = habits.length > 0;
+                            const remoteIsEmpty = data.habits.length === 0;
+                            const isRemoteOlder = remoteTimestamp > 0 && remoteTimestamp < lastLocalMutation;
+                            if ((localHasData && remoteIsEmpty) || isRemoteOlder) return;
                             habits = data.habits; userStats = data.userStats; categories = normalizeCategories(data.categories || categories);
                             save(false); renderList(); renderCalendar(); updateStats();
                         }
@@ -1381,6 +1388,10 @@
         }
         function save(triggerSync = true) { 
             categories = normalizeCategories(categories);
+            if (triggerSync) {
+                lastLocalMutation = Date.now();
+                localStorage.setItem('last_local_mutation_ts', String(lastLocalMutation));
+            }
             localStorage.setItem('habits_ultimate', JSON.stringify(habits));
             localStorage.setItem('habit_categories', JSON.stringify(categories));
             localStorage.setItem('user_stats_ultimate', JSON.stringify(userStats));

@@ -172,8 +172,9 @@
             overflow: hidden;
             border: 1px solid var(--border);
         }
-        .calendar-widget.floating { display:none; position: fixed; left: 12px; right: 12px; top: 80px; z-index: 2500; margin-bottom: 0; }
-        .calendar-widget.floating.active { display:block; animation: fadeIn 0.2s; }
+        .calendar-widget.floating { display:none; position: fixed; inset: 0; z-index: 6000; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); padding: 18px 12px; }
+        .calendar-widget.floating.active { display:flex; align-items: flex-start; justify-content: center; }
+        .calendar-sheet { width: 100%; max-width: 500px; background: var(--bg-surface); border-radius: 22px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-md); }
 
         .calendar-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -616,6 +617,7 @@
 
         <!-- CALENDAR WIDGET (New Design) -->
         <div class="calendar-widget floating" id="calendarPanel">
+            <div class="calendar-sheet" id="calendarSheet">
             <div class="calendar-header">
                 <button class="cal-nav-btn" id="prevMonth">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
@@ -639,6 +641,7 @@
             <div class="calendar-toggle collapsed" id="calToggle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
             </div>
+            </div>
         </div>
 
         <!-- LIST HEADER -->
@@ -651,54 +654,22 @@
                 </button>
             </div>
         </div>
-        <div style="margin-bottom: 8px;">
+        <div id="searchBox" style="margin-bottom: 8px; display:none;">
             <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
-        </div>
-        <div class="habit-tools">
-            <select id="habitSort" class="form-select">
-                <option value="default">مرتب‌سازی پیش‌فرض</option>
-                <option value="name">مرتب‌سازی بر اساس نام</option>
-                <option value="pinned">سنجاق‌شده‌ها اول</option>
-                <option value="done">انجام‌نشده‌ها اول</option>
-                <option value="streak">استریک بیشتر اول</option>
-                <option value="timer">تایمر طولانی‌تر اول</option>
-            </select>
-            <input class="form-input" id="quickAddInput" placeholder="ثبت سریع عادت... (Enter)">
         </div>
         <div id="toolsPanel" style="display:none;">
         <div class="tool-actions visible" id="toolActions">
-            <button class="quick-chip" id="btnFilterUndone">📌 فقط انجام‌نشده</button>
-            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه نمایان</button>
-            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی امروز</button>
-        <button class="quick-chip" id="btnFilterTimer">⏱ فقط تایمردار</button>
-            <button class="quick-chip" id="btnFilterReminder">🔔 فقط یادآوردار</button>
-            <button class="quick-chip" id="btnResetAllFilters">🧹 پاکسازی فیلترها</button>
-            <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه روز</button>
+            <button class="icon-btn" id="btnSearchToggle" title="جستجو">🔎</button>
+            <button class="icon-btn" id="btnSortCycle" title="مرتب‌سازی">↕️</button>
+            <button class="icon-btn" id="btnQuickAddPrompt" title="افزودن سریع">➕</button>
+            <button class="quick-chip" id="btnFilterUndone">📌 انجام‌نشده</button>
+            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه</button>
+            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی</button>
+            <button class="quick-chip" id="btnFilterTimer">⏱ تایمردار</button>
+            <button class="quick-chip" id="btnFilterReminder">🔔 یادآوردار</button>
+            <button class="quick-chip" id="btnResetAllFilters">🧹 پاکسازی</button>
+            <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه</button>
         </div>
-        </div>
-        <div style="margin-bottom: 8px;">
-            <input type="text" id="habitSearchInput" class="form-input" placeholder="جستجو بین عادت‌ها... (کلید /)">
-        </div>
-        <div class="habit-tools">
-            <select id="habitSort" class="form-select">
-                <option value="default">مرتب‌سازی پیش‌فرض</option>
-                <option value="name">مرتب‌سازی بر اساس نام</option>
-                <option value="pinned">سنجاق‌شده‌ها اول</option>
-                <option value="done">انجام‌نشده‌ها اول</option>
-                <option value="streak">استریک بیشتر اول</option>
-                <option value="timer">تایمر طولانی‌تر اول</option>
-            </select>
-            <input class="form-input" id="quickAddInput" placeholder="ثبت سریع عادت... (Enter)">
-        </div>
-        <button class="quick-chip" id="btnToggleTools">🧰 ابزارهای بیشتر</button>
-        <div class="tool-actions" id="toolActions">
-            <button class="quick-chip" id="btnFilterUndone">📌 فقط انجام‌نشده</button>
-            <button class="quick-chip" id="btnCompleteVisible">✅ تکمیل همه نمایان</button>
-            <button class="quick-chip" id="btnResetVisible">↩️ بازنشانی امروز</button>
-        <button class="quick-chip" id="btnFilterTimer">⏱ فقط تایمردار</button>
-            <button class="quick-chip" id="btnFilterReminder">🔔 فقط یادآوردار</button>
-            <button class="quick-chip" id="btnResetAllFilters">🧹 پاکسازی فیلترها</button>
-            <button class="quick-chip" id="btnCopyTodaySummary">📋 کپی خلاصه روز</button>
         </div>
 
         <!-- LIST -->
@@ -1562,6 +1533,7 @@
             el('btnTheme').onclick = () => { localStorage.setItem('theme_auto','0'); const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
             el('btnOpenCalendar').onclick = () => { el('calendarPanel').classList.add('active'); };
             el('btnCloseCalendar').onclick = () => { el('calendarPanel').classList.remove('active'); };
+            el('calendarPanel').onclick = (e) => { if (e.target.id === 'calendarPanel') el('calendarPanel').classList.remove('active'); };
             el('btnOpenTools').onclick = () => { const p=el('toolsPanel'); p.style.display = p.style.display==='none'?'block':'none'; };
             el('btnExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({habits, userStats, categories})], {type:'application/json'})); a.download = `backup-${getTodayDate()}.json`; a.click(); };
             el('btnExportCsv').onclick = exportCsv;
@@ -1578,16 +1550,20 @@
             el('btnResetCatFilter').onclick = () => { el('catSearchInput').value = ''; renderCategoryManager(); };
             el('btnSortCatsByUsage').onclick = () => { const usage=id=>habits.filter(h=>h.category===id).length; categories.sort((a,b)=>usage(b.id)-usage(a.id)); save(); renderCategoryManager(); updateCategoriesUI(); showToast('دسته‌ها بر اساس استفاده مرتب شد'); };
             el('habitSearchInput').oninput = (e) => { habitSearchQuery = e.target.value.trim().toLowerCase(); renderList(); };
-            el('habitSort').onchange = (e) => { habitSortMode = e.target.value; renderList(); };
-            el('btnFilterUndone').onclick = () => { filterUndoneOnly = !filterUndoneOnly; el('btnFilterUndone').classList.toggle('active', filterUndoneOnly); renderList(); };
+                        el('btnFilterUndone').onclick = () => { filterUndoneOnly = !filterUndoneOnly; el('btnFilterUndone').classList.toggle('active', filterUndoneOnly); renderList(); };
             el('btnCompleteVisible').onclick = completeVisibleHabits;
             el('btnResetVisible').onclick = resetVisibleHabits;
                         el('btnFilterTimer').onclick = () => { filterTimerOnly = !filterTimerOnly; el('btnFilterTimer').classList.toggle('active', filterTimerOnly); renderList(); };
             el('btnFilterReminder').onclick = () => { filterReminderOnly = !filterReminderOnly; el('btnFilterReminder').classList.toggle('active', filterReminderOnly); renderList(); };
-            el('btnResetAllFilters').onclick = () => { filterUndoneOnly = false; filterTimerOnly = false; filterReminderOnly = false; habitSearchQuery=''; activeFilter='all'; habitSortMode='default'; el('habitSearchInput').value=''; el('habitSort').value='default'; el('btnFilterUndone').classList.remove('active'); el('btnFilterTimer').classList.remove('active'); el('btnFilterReminder').classList.remove('active'); updateCategoriesUI(); renderList(); };
+            el('btnResetAllFilters').onclick = () => { filterUndoneOnly = false; filterTimerOnly = false; filterReminderOnly = false; habitSearchQuery=''; activeFilter='all'; habitSortMode='default'; el('habitSearchInput').value=''; el('btnFilterUndone').classList.remove('active'); el('btnFilterTimer').classList.remove('active'); el('btnFilterReminder').classList.remove('active'); updateCategoriesUI(); renderList(); };
             el('btnCopyTodaySummary').onclick = async () => { const txt=`خلاصه امروز: ${el('headerCompletedCount').textContent} از ${el('headerHabitCount').textContent} (${el('headerCompletionRate').textContent})`; try { await navigator.clipboard.writeText(txt); showToast('خلاصه کپی شد'); } catch { showToast('امکان کپی نیست', 'error'); } };
-            el('quickAddInput').onkeydown = (e) => { if(e.key!=='Enter') return; e.preventDefault(); let raw=e.target.value.trim(); if(!raw) return; const catTag=(raw.match(/#(\S+)/)||[])[1]; const timerTag=(raw.match(/t(\d{1,3})/)||[])[1]; const reminderTag=(raw.match(/@(\d{2}:\d{2})/)||[])[1]; const pinned=raw.includes('!'); raw=raw.replace(/#\S+/g,'').replace(/t\d{1,3}/g,'').replace(/@\d{2}:\d{2}/g,'').replace(/!/g,'').trim(); const matchedCat=categories.find(c=>c.name.includes(catTag||'')); habits.push({ id:Date.now().toString(), name:raw||'عادت جدید', frequency:'daily', category:matchedCat?.id||categories[0]?.id||'health', customDays:[], icon:'target', color:'#4f46e5', hasTimer:!!timerTag, timerDuration:parseInt(timerTag)||25, hasReminder:!!reminderTag, reminderTime:reminderTag||'20:00', pinned, completedDates:[], notes:{} }); e.target.value=''; save(); renderList(); renderCalendar(); showToast('عادت سریع اضافه شد'); };
-            document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); el('habitSearchInput').focus(); } if (e.key.toLowerCase() === 'n' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') el('btnAddHabit').click(); if (e.key.toLowerCase() === 't') jumpToToday(); if (e.key.toLowerCase() === 'f') toggleFocusMode(); });
+            el('btnSearchToggle').onclick = () => { const box = el('searchBox'); box.style.display = box.style.display==='none'?'block':'none'; if(box.style.display==='block') el('habitSearchInput').focus(); };
+            const sortModes = ['default','name','pinned','done','streak','timer'];
+            const sortLabels = {'default':'پیش‌فرض','name':'نام','pinned':'سنجاق','done':'انجام‌نشده','streak':'استریک','timer':'تایمر'};
+            el('btnSortCycle').onclick = () => { const i = sortModes.indexOf(habitSortMode); habitSortMode = sortModes[(i+1)%sortModes.length]; showToast(`مرتب‌سازی: ${sortLabels[habitSortMode]}`); renderList(); };
+            el('btnQuickAddPrompt').onclick = () => { const raw = prompt('عنوان عادت سریع (نمونه: مطالعه #یادگیری t25 @20:30 !)'); if(!raw) return; const catTag=(raw.match(/#(\S+)/)||[])[1]; const timerTag=(raw.match(/t(\d{1,3})/)||[])[1]; const reminderTag=(raw.match(/@(\d{2}:\d{2})/)||[])[1]; const pinned=raw.includes('!'); const clean=raw.replace(/#\S+/g,'').replace(/t\d{1,3}/g,'').replace(/@\d{2}:\d{2}/g,'').replace(/!/g,'').trim(); const matchedCat=categories.find(c=>c.name.includes(catTag||'')); habits.push({ id:Date.now().toString(), name:clean||'عادت جدید', frequency:'daily', category:matchedCat?.id||categories[0]?.id||'health', customDays:[], icon:'target', color:'#4f46e5', hasTimer:!!timerTag, timerDuration:parseInt(timerTag)||25, hasReminder:!!reminderTag, reminderTime:reminderTag||'20:00', pinned, completedDates:[], notes:{} }); save(); renderList(); renderCalendar(); showToast('عادت سریع اضافه شد'); };
+
+                        document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); const box=el('searchBox'); box.style.display='block'; el('habitSearchInput').focus(); } if (e.key.toLowerCase() === 'n' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') el('btnAddHabit').click(); if (e.key.toLowerCase() === 't') jumpToToday(); if (e.key.toLowerCase() === 'f') toggleFocusMode(); });
             el('btnJumpToday').onclick = jumpToToday;
             el('btnRandomHabit').onclick = runRandomHabit;
             el('btnFocusMode').onclick = toggleFocusMode;
